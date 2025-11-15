@@ -37,8 +37,10 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
-    'products',
-    'rest_framework',
+    "imports",
+    "products",
+    "webhooks",
+    "rest_framework",
 ]
 
 MIDDLEWARE = [
@@ -83,7 +85,9 @@ DATABASES = {
 }
 
 import dj_database_url
-DATABASES["default"] = dj_database_url.config(default=DATABASES["default"])
+DATABASES["default"] = dj_database_url.config(
+    default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
+)
 
 
 # Password validation
