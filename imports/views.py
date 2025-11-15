@@ -15,6 +15,12 @@ from rest_framework import status
 from django.core.cache import cache
 from .models import ImportJob
 
+from django.shortcuts import render
+
+
+def upload_page(request):
+    return render(request, "upload.html")
+
 class ImportCSVView(APIView):
     def post(self, request):
         serializer = ImportCSVSerializer(data=request.data)
