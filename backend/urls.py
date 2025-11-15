@@ -16,7 +16,10 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path
+from products.views import upload_csv, import_progress
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path("upload/", upload_csv, name="upload_csv"),
+    path("progress/<str:task_id>/", import_progress, name="import_progress"),
 ]
