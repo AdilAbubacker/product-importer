@@ -53,7 +53,6 @@ class ImportCSVView(APIView):
 
 
 
-
 class ImportStatusView(APIView):
     def get(self, request, job_id):
         try:
@@ -66,9 +65,24 @@ class ImportStatusView(APIView):
 
         # Redis key for progress
         redis_key = f"import:{job_id}:processed"
+        
+        # IMPORTANT: Check 'is not None' explicitly, because 0 is falsy!
+        # If redis_processed is 0, we still want to use it, not fallback to DB
         redis_processed = cache.get(redis_key)
-
-        processed_rows = redis_processed or job.processed_rows
+        
+        # Debug: Log what we're getting from Redis
+        print(f"[ImportStatusView] Redis key: {redis_key}, value: {redis_processed}, DB value: {job.processed_rows}")
+        
+        if redis_processed is not None:
+            # Redis has data (even if it's 0) - use it for real-time updates
+            processed_rows = int(redis_processed)
+            progress_source = "redis"
+            print(f"[ImportStatusView] Using Redis: {processed_rows}")
+        else:
+            # Redis doesn't have data yet, use DB (only updated every 50k rows)
+            processed_rows = job.processed_rows
+            progress_source = "db"
+            print(f"[ImportStatusView] Redis not available, using DB: {processed_rows}")
 
         data = {
             "job_id": job_id,
@@ -76,6 +90,7 @@ class ImportStatusView(APIView):
             "processed_rows": processed_rows,
             "total_rows": job.total_rows,
             "error_message": job.error_message,
+            "progress_source": progress_source,  # Debug: shows if using redis or db
         }
 
         return Response(data)

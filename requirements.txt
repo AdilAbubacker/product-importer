@@ -13,12 +13,14 @@ dj-database-url==3.0.1
 Django==5.2.8
 django-redis==6.0.0
 djangorestframework==3.16.1
+gunicorn==23.0.0
 idna==3.11
 kombu==5.5.4
 numpy==2.3.4
 packaging==25.0
 pandas==2.3.3
 prompt_toolkit==3.0.52
+psycopg2-binary==2.9.11
 python-dateutil==2.9.0.post0
 pytz==2025.2
 redis==7.0.1
@@ -30,7 +32,3 @@ tzdata==2025.2
 urllib3==2.5.0
 vine==5.1.0
 wcwidth==0.2.14
-
-# REQUIRED FOR DEPLOYMENT:
-gunicorn==22.0.0
-psycopg2-binary==2.9.9
