@@ -66,12 +66,18 @@ def process_csv_import(job_id, file_path):
     try:
         job.status = "running"
         job.save(update_fields=["status"])
+        
+        # Cache initial job data in Redis
+        cache.set(f"import:{job_id}:status", "running", timeout=None)
 
         # STEP 1 — Count total rows
         with open(file_path, newline="", encoding="utf-8") as f:
             total_rows = sum(1 for _ in f) - 1  # minus header
         job.total_rows = max(total_rows, 0)
         job.save(update_fields=["total_rows"])
+        
+        # Cache total_rows in Redis
+        cache.set(f"import:{job_id}:total_rows", job.total_rows, timeout=None)
 
         print(f"[Celery] Total rows: {total_rows}")
 
@@ -94,8 +100,14 @@ def process_csv_import(job_id, file_path):
                     buffer = []
                     chunk_index += 1
 
-                    # Update Redis every chunk
-                    cache.set(f"import:{job_id}:processed", processed)
+                    # Update Redis every chunk with progress data (timeout=None means never expire)
+                    redis_key = f"import:{job_id}:processed"
+                    print(f"[Celery] Updated cache progress: {processed} (key: {redis_key})")
+                    cache.set(redis_key, processed, timeout=None)
+                    # Verify it was set
+                    verify = cache.get(redis_key)
+                    if verify != processed:
+                        print(f"[Celery] WARNING: Cache verification failed! Set {processed}, got {verify}")
 
                     # Update DB only every 5 chunks
                     if chunk_index % 5 == 0:
@@ -109,13 +121,16 @@ def process_csv_import(job_id, file_path):
                 _process_chunk(buffer)
                 processed += len(buffer)
                 chunk_index += 1
-                cache.set(f"import:{job_id}:processed", processed)
+                cache.set(f"import:{job_id}:processed", processed, timeout=None)
 
         # Final DB update
         job.processed_rows = processed
         job.status = "completed"
         job.save(update_fields=["processed_rows", "status"])
-
+        
+        # Final cache update (keep for 1 hour after completion for status polling)
+        cache.set(f"import:{job_id}:processed", processed, timeout=3600)
+        cache.set(f"import:{job_id}:status", "completed", timeout=3600)
         print(f"[Celery] Job {job_id} completed successfully.")
 
     except Exception as e:
@@ -124,5 +139,9 @@ def process_csv_import(job_id, file_path):
         job.status = "failed"
         job.error_message = str(e)
         job.save(update_fields=["status", "error_message"])
+        
+        # Cache failure status
+        cache.set(f"import:{job_id}:status", "failed", timeout=3600)
+        cache.set(f"import:{job_id}:error_message", str(e), timeout=3600)
 
         raise
