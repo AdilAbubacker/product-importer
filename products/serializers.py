@@ -2,6 +2,7 @@ from rest_framework import serializers
 from .models import Product
 
 class ProductSerializer(serializers.ModelSerializer):
+
     def validate_sku(self, value):
         return value.lower()
 
@@ -16,6 +17,3 @@ class ProductSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
         ]
-
-
-    

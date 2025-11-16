@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product Form</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        input, textarea, select {
+            display: block;
+            margin-bottom: 12px;
+            padding: 8px;
+            width: 300px;
+        }
+        button { padding: 8px 14px; }
+    </style>
+</head>
+
+<body>
+
+<h2 id="title">Product</h2>
+
+<form id="productForm">
+    <label>SKU</label>
+    <input type="text" id="sku">
+
+    <label>Name</label>
+    <input type="text" id="name">
+
+    <label>Description</label>
+    <textarea id="description"></textarea>
+
+    <label>Active</label>
+    <select id="active">
+        <option value="true">Yes</option>
+        <option value="false">No</option>
+    </select>
+
+    <button type="submit">Save</button>
+</form>
+
+<script>
+// ----------------------------------------
+// CSRF helper
+// ----------------------------------------
+function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== "") {
+        const cookies = document.cookie.split(";");
+        for (let i = 0; i < cookies.length; i++) {
+            const cookie = cookies[i].trim();
+            if (cookie.substring(0, name.length + 1) === (name + "=")) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+            }
+        }
+    }
+    return cookieValue;
+}
+
+const csrftoken = getCookie("csrftoken");
+
+// ----------------------------------------
+// Detect create/edit mode
+// ----------------------------------------
+const urlParams = new URLSearchParams(window.location.search);
+const productId = urlParams.get("id");
+
+// ----------------------------------------
+// If editing: load product + lock SKU
+// ----------------------------------------
+if (productId) {
+    document.getElementById("title").innerText = "Edit Product";
+
+    fetch(`/api/products/${productId}/`)
+        .then(res => res.json())
+        .then(p => {
+            document.getElementById("sku").value = p.sku;
+            document.getElementById("sku").disabled = true;   // 🔒 lock SKU
+            document.getElementById("name").value = p.name;
+            document.getElementById("description").value = p.description;
+            document.getElementById("active").value = p.active ? "true" : "false";
+        });
+} else {
+    document.getElementById("title").innerText = "Create Product";
+}
+
+// ----------------------------------------
+// SAVE (POST for create, PATCH for edit)
+// ----------------------------------------
+document.getElementById("productForm").addEventListener("submit", function (e) {
+    e.preventDefault();
+
+    const payload = {
+        name: document.getElementById("name").value,
+        description: document.getElementById("description").value,
+        active: document.getElementById("active").value === "true",
+    };
+
+    // Only send SKU on CREATE
+    if (!productId) {
+        payload.sku = document.getElementById("sku").value.toLowerCase();
+    }
+
+    const url = productId ? `/api/products/${productId}/` : `/api/products/`;
+    const method = productId ? "PATCH" : "POST";
+
+    fetch(url, {
+        method: method,
+        headers: {
+            "Content-Type": "application/json",
+            "X-CSRFToken": csrftoken
+        },
+        body: JSON.stringify(payload)
+    })
+    .then(res => {
+        if (res.ok) {
+            window.location = "/api/products-ui/";
+        } else {
+            res.json().then(err => console.log("Error:", err));
+        }
+    });
+});
+</script>
+
+</body>
+</html>
