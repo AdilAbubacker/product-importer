@@ -85,23 +85,29 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 #         'NAME': BASE_DIR / 'db.sqlite3',
 #     }
 # }
+import dj_database_url
+import os
+
 DATABASES = {
     "default": dj_database_url.config(
-        default=os.environ.get("DATABASE_URL")
+        default=os.environ.get("DATABASE_URL"),
+        conn_max_age=0,
+        ssl_require=True
     )
 }
 
 
-import dj_database_url
-db_config = dj_database_url.config(
-    default=f"sqlite:///{BASE_DIR / 'db.sqlite3'}"
-)
-if db_config:
-    DATABASES["default"].update(db_config)
-    # Ensure timeout is set even if using dj_database_url
-    if 'OPTIONS' not in DATABASES["default"]:
-        DATABASES["default"]['OPTIONS'] = {}
-    DATABASES["default"]['OPTIONS']['timeout'] = 20
+if not os.environ.get("DATABASE_URL"):
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.sqlite3",
+            "NAME": BASE_DIR / "db.sqlite3",
+        }
+    }
+
+
+
+
 
 
 # Password validation
