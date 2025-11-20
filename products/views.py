@@ -1,114 +1,176 @@
-from rest_framework import viewsets
+from django.shortcuts import render, get_object_or_404, redirect
+from django.core.paginator import Paginator
 from django.db.models import Q
-from django.shortcuts import render
-from rest_framework.response import Response
-from rest_framework import status
+from django.views.decorators.http import require_http_methods, require_POST
+from django.contrib import messages
+from django.db import connection
+
 from .models import Product
-from .serializers import ProductSerializer
-from rest_framework.views import APIView
-from webhooks.tasks import deliver_webhook
+from webhooks.tasks import dispatch_webhooks_for_event
+from django.utils import timezone
 
 
-def product_list_page(request):
-    return render(request, "products.html")
+@require_http_methods(["GET"])
+def product_list(request):
+    """
+    List products with filtering + pagination.
+    """
+    qs = Product.objects.all().order_by("id")
+
+    sku_query = request.GET.get("sku", "").strip()
+    search_query = request.GET.get("q", "").strip()
+    status = request.GET.get("status", "").strip()  # "", "active", "inactive"
+
+    if sku_query:
+        qs = qs.filter(sku__icontains=sku_query)
+
+    if search_query:
+        qs = qs.filter(
+            Q(name__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+
+    if status == "active":
+        qs = qs.filter(active=True)
+    elif status == "inactive":
+        qs = qs.filter(active=False)
+
+    page_number = request.GET.get("page", 1)
+    paginator = Paginator(qs, 25)  # 25 per page
+    page_obj = paginator.get_page(page_number)
+
+    context = {
+        "page_obj": page_obj,
+        "sku_query": sku_query,
+        "search_query": search_query,
+        "status": status,
+        "current_section": "products",
+    }
+    return render(request, "products/product_list.html", context)
 
 
-class ProductViewSet(viewsets.ModelViewSet):
-    serializer_class = ProductSerializer
+@require_POST
+def product_create(request):
+    """
+    Create a new product from the modal form.
+    """
+    sku = (request.POST.get("sku") or "").strip()
+    name = (request.POST.get("name") or "").strip()
+    description = (request.POST.get("description") or "").strip()
+    active = request.POST.get("active") == "on"
 
-    def get_queryset(self):
-        qs = Product.objects.all().order_by("-id")
+    if not sku or not name:
+        messages.error(request, "SKU and Name are required.")
+        return redirect("product_list")
 
-        search = self.request.query_params.get("search")
-        if search:
-            qs = qs.filter(
-                Q(sku__icontains=search) |
-                Q(name__icontains=search)
-            )
+    product = Product(
+        sku=sku,
+        name=name,
+        description=description,
+        active=active,
+    )
+    try:
+        product.save()
+        messages.success(request, f"Product '{product.sku}' created.")
+    except Exception as e:
+        messages.error(request, f"Failed to create product: {e}")
+        return redirect("product_list")
 
-        active = self.request.query_params.get("active")
-        if active is not None and active != "":
-            qs = qs.filter(active=(active.lower() == "true"))
-
-        return qs
-
-    # ----------------------------------------
-    # CREATE with UPSERT + Webhook trigger
-    # ----------------------------------------
-    def create(self, request, *args, **kwargs):
-        sku = request.data.get("sku", "").lower()
-        existing = Product.objects.filter(sku=sku).first()
-
-        if existing:
-            serializer = self.get_serializer(existing, data=request.data, partial=True)
-            serializer.is_valid(raise_exception=True)
-            product = serializer.save()
-
-            # Fire webhook
-            payload = {
-                "event_type": "product.updated",
-                "id": product.id,
+    # 🔔 Fire product.created webhooks
+    dispatch_webhooks_for_event.delay(
+        "product.created",
+        {
+            "type": "product.created",
+            "product": {
+                "id": str(product.id),
                 "sku": product.sku,
                 "name": product.name,
                 "description": product.description,
                 "active": product.active,
-            }
-            deliver_webhook.delay("product.updated", payload)
+            },
+            "timestamp": timezone.now().isoformat(),
+        },
+    )
 
-            return Response(serializer.data, status=status.HTTP_200_OK)
-
-        # Normal create
-        response = super().create(request, *args, **kwargs)
-
-        # After creating a new product, fetch instance
-        product = Product.objects.get(id=response.data["id"])
-
-        payload = {
-            "event_type": "product.updated",
-            "id": product.id,
-            "sku": product.sku,
-            "name": product.name,
-            "description": product.description,
-            "active": product.active,
-        }
-        deliver_webhook.delay("product.updated", payload)
-
-        return response
-
-    # ----------------------------------------
-    # UPDATE (PATCH) + Webhook trigger
-    # ----------------------------------------
-    def update(self, request, *args, **kwargs):
-        response = super().update(request, *args, **kwargs)
-
-        # Webhook only after successful save
-        product = Product.objects.get(id=response.data["id"])
-
-        payload = {
-            "event_type": "product.updated",
-            "id": product.id,
-            "sku": product.sku,
-            "name": product.name,
-            "description": product.description,
-            "active": product.active,
-        }
-        deliver_webhook.delay("product.updated", payload)
-
-        return response
-
-
-def product_form_page(request):
-    return render(request, "product_form.html")
+    return redirect("product_list")
 
 
 
+@require_POST
+def product_update(request, pk: int):
+    """
+    Update an existing product from the modal form.
+    """
+    product = get_object_or_404(Product, pk=pk)
 
-class ProductBulkDeleteView(APIView):
-    def post(self, request):
-        ids = request.data.get("ids", [])
-        if not isinstance(ids, list):
-            return Response({"error": "ids must be a list"}, status=400)
+    sku = (request.POST.get("sku") or "").strip()
+    name = (request.POST.get("name") or "").strip()
+    description = (request.POST.get("description") or "").strip()
+    active = request.POST.get("active") == "on"
 
-        deleted_count, _ = Product.objects.filter(id__in=ids).delete()
+    if not sku or not name:
+        messages.error(request, "SKU and Name are required.")
+        return redirect("product_list")
 
-        return Response({"deleted": deleted_count}, status=200)
+    product.sku = sku
+    product.name = name
+    product.description = description
+    product.active = active
+
+    try:
+        product.save()
+        messages.success(request, f"Product '{product.sku}' updated.")
+    except Exception as e:
+        messages.error(request, f"Failed to update product: {e}")
+        return redirect("product_list")
+
+    # 🔔 Fire product.updated webhooks
+    dispatch_webhooks_for_event.delay(
+        "product.updated",
+        {
+            "type": "product.updated",
+            "product": {
+                "id": str(product.id),
+                "sku": product.sku,
+                "name": product.name,
+                "description": product.description,
+                "active": product.active,
+            },
+            "timestamp": timezone.now().isoformat(),
+        },
+    )
+
+    return redirect("product_list")
+
+
+
+@require_POST
+def product_delete(request, pk: int):
+    """
+    Delete a single product (with JS confirmation on the UI).
+    """
+    product = get_object_or_404(Product, pk=pk)
+    sku = product.sku
+    product.delete()
+    messages.success(request, f"Product '{sku}' deleted.")
+    return redirect("product_list")
+
+
+@require_POST
+def product_bulk_delete(request):
+    """
+    Delete all products. Uses TRUNCATE on Postgres for speed, falls back to
+    ORM delete on SQLite for local development.
+    """
+    vendor = connection.vendor  # 'postgresql', 'sqlite', 'mysql', etc.
+
+    if vendor == "postgresql":
+        # Fast path for Postgres
+        with connection.cursor() as cursor:
+            cursor.execute('TRUNCATE TABLE "products_product" RESTART IDENTITY CASCADE;')
+    else:
+        # Safe fallback for SQLite / other DBs
+        Product.objects.all().delete()
+
+    messages.success(request, "All products have been deleted.")
+    return redirect("product_list")

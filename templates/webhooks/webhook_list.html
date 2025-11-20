@@ -1,0 +1,779 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Webhooks · Product Importer{% endblock %}
+
+{% block extra_head %}
+  <style>
+    .container {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--color-border);
+    }
+
+    .header {
+      margin-bottom: 32px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-text h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--color-text-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .header-text .subtitle {
+      font-size: 15px;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+
+    .info-banner {
+      padding: 16px 20px;
+      background: linear-gradient(135deg, var(--color-primary-light) 0%, #faf5ff 100%);
+      border: 1px solid #e9d5ff;
+      border-radius: var(--radius-lg);
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .info-banner-icon {
+      font-size: 20px;
+    }
+
+    /* Table */
+    .table-container {
+      margin-top: 24px;
+      overflow-x: auto;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead {
+      background: linear-gradient(to bottom, #fafbfc 0%, #f6f8fa 100%);
+      border-bottom: 2px solid var(--color-border);
+    }
+
+    th {
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-secondary);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--color-border-light);
+      transition: var(--transition);
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: var(--color-bg);
+    }
+
+    td {
+      padding: 16px;
+      vertical-align: top;
+    }
+
+    .webhook-id {
+      font-weight: 600;
+      color: var(--color-text-tertiary);
+      font-size: 13px;
+    }
+
+    .webhook-name {
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 6px;
+      font-size: 15px;
+    }
+
+    .webhook-event {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--color-primary-light);
+      color: var(--color-primary);
+      border-radius: 6px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .webhook-url {
+      font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      word-break: break-all;
+      max-width: 300px;
+      line-height: 1.5;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: block;
+    }
+
+    .badge-enabled {
+      background: var(--color-success-light);
+      color: #065f46;
+    }
+
+    .badge-enabled::before {
+      background: var(--color-success);
+    }
+
+    .badge-disabled {
+      background: var(--color-danger-light);
+      color: #991b1b;
+    }
+
+    .badge-disabled::before {
+      background: var(--color-danger);
+    }
+
+    .test-result {
+      font-size: 13px;
+    }
+
+    .test-success {
+      color: var(--color-success);
+      font-weight: 600;
+    }
+
+    .test-error {
+      color: var(--color-danger);
+      font-weight: 600;
+    }
+
+    .test-time {
+      color: var(--color-text-tertiary);
+      font-size: 12px;
+      margin-top: 2px;
+    }
+
+    .test-details {
+      margin-top: 4px;
+      padding: 8px 10px;
+      background: var(--color-border-light);
+      border-radius: 6px;
+      font-size: 12px;
+      color: var(--color-text-secondary);
+    }
+
+    .cell-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    .btn-test {
+      background: linear-gradient(135deg, var(--color-primary) 0%, #8b5cf6 100%);
+      color: white;
+      border: none;
+    }
+
+    .btn-test:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.4);
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      width: 560px;
+      max-width: calc(100% - 32px);
+      box-shadow: var(--shadow-xl);
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid var(--color-border);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-header {
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--color-border-light);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: 20px;
+      color: var(--color-text-secondary);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      background: var(--color-danger-light);
+      color: var(--color-danger);
+    }
+
+    .modal-body {
+      padding: 28px;
+    }
+
+    .modal-field {
+      margin-bottom: 20px;
+    }
+
+    .modal-field:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .modal-field label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--color-text-primary);
+    }
+
+    .modal-field input[type="text"],
+    .modal-field input[type="url"],
+    .modal-field select {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      font-size: 14px;
+      transition: var(--transition);
+      font-family: inherit;
+      background: var(--color-surface);
+    }
+
+    .modal-field input:focus,
+    .modal-field select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+
+    .modal-field select {
+      cursor: pointer;
+    }
+
+    .field-hint {
+      margin-top: 6px;
+      font-size: 13px;
+      color: var(--color-text-tertiary);
+    }
+
+    .checkbox-field {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px;
+      background: var(--color-bg);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .checkbox-field:hover {
+      background: var(--color-border-light);
+    }
+
+    .checkbox-field input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: var(--color-primary);
+    }
+
+    .checkbox-field label {
+      margin: 0 !important;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .modal-footer {
+      padding: 20px 28px;
+      border-top: 1px solid var(--color-border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: var(--color-bg);
+      border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+
+    .empty-state-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: 8px;
+    }
+
+    .empty-state-text {
+      font-size: 15px;
+      color: var(--color-text-secondary);
+      margin-bottom: 20px;
+    }
+
+    #confirm-delete-icon {
+      transition: var(--transition);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+        border-radius: var(--radius-lg);
+      }
+
+      .header-top {
+        flex-direction: column;
+      }
+
+      .header-text h1 {
+        font-size: 24px;
+      }
+
+      .table-container {
+        border-radius: var(--radius-md);
+      }
+
+      table {
+        font-size: 13px;
+      }
+
+      th, td {
+        padding: 12px;
+      }
+
+      .cell-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="header">
+    <div class="header-top">
+      <div class="header-text">
+        <h1>Webhooks</h1>
+        <p class="subtitle">
+          Configure webhook endpoints to receive real-time notifications for events like imports, product updates, and more
+        </p>
+      </div>
+      <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+        <span>+</span>
+        New Webhook
+      </button>
+    </div>
+
+    <div class="info-banner">
+      <div class="info-banner-icon">🔔</div>
+      <div>
+        Webhooks send HTTP POST requests to your specified URLs when specific events occur. 
+        Use them to integrate with external systems and automate workflows.
+      </div>
+    </div>
+  </div>
+
+  {% if webhooks %}
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Webhook Details</th>
+            <th>Endpoint</th>
+            <th>Status</th>
+            <th>Last Test</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for webhook in webhooks %}
+          <tr
+            data-webhook-id="{{ webhook.id }}"
+            data-webhook-name="{{ webhook.name|escapejs }}"
+            data-webhook-url="{{ webhook.target_url|escapejs }}"
+            data-webhook-event="{{ webhook.event_type|escapejs }}"
+            data-webhook-enabled="{{ webhook.is_enabled|yesno:'true,false' }}"
+          >
+            <td><span class="webhook-id">#{{ webhook.id }}</span></td>
+            <td>
+              <div class="webhook-name">{{ webhook.name }}</div>
+              <span class="webhook-event">{{ webhook.get_event_type_display }}</span>
+            </td>
+            <td>
+              <div class="webhook-url">{{ webhook.target_url }}</div>
+            </td>
+            <td>
+              {% if webhook.is_enabled %}
+                <span class="badge badge-enabled">Enabled</span>
+              {% else %}
+                <span class="badge badge-disabled">Disabled</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if webhook.last_triggered_at %}
+                <div class="test-result">
+                  {% if webhook.last_status_code %}
+                    <span class="test-success">✓ {{ webhook.last_status_code }}</span>
+                    <span style="color: var(--color-text-tertiary);"> · {{ webhook.last_response_ms|floatformat:0 }}ms</span>
+                  {% else %}
+                    <span class="test-error">✗ Failed</span>
+                  {% endif %}
+                </div>
+                <div class="test-time">{{ webhook.last_triggered_at|date:"M d, Y h:i A" }}</div>
+                {% if webhook.last_error %}
+                  <div class="test-details">{{ webhook.last_error|truncatechars:80 }}</div>
+                {% endif %}
+              {% else %}
+                <span style="color: var(--color-text-tertiary); font-size: 13px;">Not tested yet</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="cell-actions">
+                <form method="post" action="{% url 'webhook_test' webhook.id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-test btn-sm">
+                    🧪 Test
+                  </button>
+                </form>
+
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openEditModal(this)">
+                  Edit
+                </button>
+
+                <form method="post" action="{% url 'webhook_toggle_enabled' webhook.id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <button type="submit" class="btn btn-secondary btn-sm">
+                    {% if webhook.is_enabled %}Disable{% else %}Enable{% endif %}
+                  </button>
+                </form>
+
+                <form method="post" action="{% url 'webhook_delete' webhook.id %}" style="display: inline;">
+                  {% csrf_token %}
+                  <button type="button" class="btn btn-danger btn-sm" onclick="confirmDeleteWebhook(this)">
+                    Delete
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">🔗</div>
+      <div class="empty-state-title">No webhooks configured</div>
+      <div class="empty-state-text">
+        Create your first webhook to start receiving event notifications
+      </div>
+      <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+        <span>+</span>
+        Create Webhook
+      </button>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Modal: Create / Edit webhook -->
+<div class="modal-backdrop" id="webhook-modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">New Webhook</div>
+      <button type="button" class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <form method="post" id="webhook-form">
+      <div class="modal-body">
+        {% csrf_token %}
+        <div class="modal-field">
+          <label for="modal-name">Webhook Name *</label>
+          <input type="text" id="modal-name" name="name" required placeholder="e.g., Slack Notifications">
+          <div class="field-hint">A descriptive name to help you identify this webhook</div>
+        </div>
+        <div class="modal-field">
+          <label for="modal-url">Target URL *</label>
+          <input type="url" id="modal-url" name="target_url" required placeholder="https://example.com/webhooks/endpoint">
+          <div class="field-hint">The endpoint where POST requests will be sent</div>
+        </div>
+        <div class="modal-field">
+          <label for="modal-event">Event Type *</label>
+          <select id="modal-event" name="event_type" required>
+            <option value="import.completed">Import Completed</option>
+            <option value="product.created">Product Created</option>
+            <option value="product.updated">Product Updated</option>
+          </select>
+          <div class="field-hint">The event that will trigger this webhook</div>
+        </div>
+        <div class="modal-field">
+          <div class="checkbox-field">
+            <input type="checkbox" id="modal-enabled" name="is_enabled" checked>
+            <label for="modal-enabled">Enable this webhook immediately</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">Save Webhook</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const modalBackdrop = document.getElementById("webhook-modal-backdrop");
+  const modalTitle = document.getElementById("modal-title");
+  const modalName = document.getElementById("modal-name");
+  const modalUrl = document.getElementById("modal-url");
+  const modalEvent = document.getElementById("modal-event");
+  const modalEnabled = document.getElementById("modal-enabled");
+  const webhookForm = document.getElementById("webhook-form");
+
+  function openCreateModal() {
+    modalTitle.textContent = "New Webhook";
+    webhookForm.action = "{% url 'webhook_create' %}";
+    modalName.value = "";
+    modalUrl.value = "";
+    modalEvent.value = "import.completed";
+    modalEnabled.checked = true;
+    modalBackdrop.classList.add("show");
+    setTimeout(() => modalName.focus(), 100);
+  }
+
+  function openEditModal(buttonEl) {
+    const row = buttonEl.closest("tr");
+    const id = row.dataset.webhookId;
+    const name = row.dataset.webhookName || "";
+    const url = row.dataset.webhookUrl || "";
+    const eventType = row.dataset.webhookEvent || "import.completed";
+    const enabled = row.dataset.webhookEnabled === "true";
+
+    modalTitle.textContent = "Edit Webhook";
+    webhookForm.action = "/webhooks/" + id + "/update/";
+    modalName.value = name;
+    modalUrl.value = url;
+    modalEvent.value = eventType;
+    modalEnabled.checked = enabled;
+    modalBackdrop.classList.add("show");
+    setTimeout(() => modalName.focus(), 100);
+  }
+
+  function closeModal() {
+    modalBackdrop.classList.remove("show");
+  }
+
+  // Delete confirmation for webhooks
+  let pendingWebhookDeleteForm = null;
+
+  function confirmDeleteWebhook(buttonEl) {
+    const form = buttonEl.closest("form");
+    const row = buttonEl.closest("tr");
+    const webhookName = row ? row.dataset.webhookName || "this webhook" : "this webhook";
+    pendingWebhookDeleteForm = form;
+    showWebhookDeleteConfirm("Delete Webhook", `Are you sure you want to delete "${webhookName}"? This action cannot be undone.`);
+  }
+
+  function showWebhookDeleteConfirm(title, message) {
+    const confirmModal = document.getElementById("confirm-delete-modal");
+    const confirmTitle = document.getElementById("confirm-delete-title");
+    const confirmMessage = document.getElementById("confirm-delete-message");
+    const confirmIcon = document.getElementById("confirm-delete-icon");
+    
+    confirmTitle.textContent = title;
+    confirmMessage.textContent = message;
+    confirmIcon.textContent = "🔗";
+    confirmIcon.style.background = "linear-gradient(135deg, var(--color-danger) 0%, #dc2626 100%)";
+    
+    confirmModal.classList.add("show");
+  }
+
+  function executeWebhookDelete() {
+    if (pendingWebhookDeleteForm) {
+      pendingWebhookDeleteForm.submit();
+    }
+    closeWebhookDeleteConfirm();
+  }
+
+  function closeWebhookDeleteConfirm() {
+    document.getElementById("confirm-delete-modal").classList.remove("show");
+    pendingWebhookDeleteForm = null;
+  }
+
+  modalBackdrop.addEventListener("click", function (e) {
+    if (e.target === modalBackdrop) closeModal();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      if (document.getElementById("confirm-delete-modal").classList.contains("show")) {
+        closeWebhookDeleteConfirm();
+      } else {
+        closeModal();
+      }
+    }
+  });
+
+  // Ensure CSRF token is included in webhook form submission
+  webhookForm.addEventListener("submit", function(e) {
+    const existingToken = webhookForm.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (!existingToken || !existingToken.value) {
+      const csrftoken = getCookie('csrftoken');
+      if (csrftoken) {
+        if (!existingToken) {
+          const tokenInput = document.createElement('input');
+          tokenInput.type = 'hidden';
+          tokenInput.name = 'csrfmiddlewaretoken';
+          tokenInput.value = csrftoken;
+          webhookForm.appendChild(tokenInput);
+        } else {
+          existingToken.value = csrftoken;
+        }
+      }
+    }
+  });
+
+  // Helper function to get CSRF token from cookie
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-backdrop" id="confirm-delete-modal">
+  <div class="modal" style="width: 460px;">
+    <div class="modal-header">
+      <div class="modal-title" style="display: flex; align-items: center; gap: 12px;">
+        <div id="confirm-delete-icon" style="width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; box-shadow: var(--shadow-sm);"></div>
+        <span id="confirm-delete-title">Delete Webhook</span>
+      </div>
+      <button type="button" class="modal-close" onclick="closeWebhookDeleteConfirm()">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-delete-message" style="font-size: 15px; color: var(--color-text-secondary); line-height: 1.6; margin: 0;"></p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeWebhookDeleteConfirm()">Cancel</button>
+      <button type="button" class="btn btn-danger" onclick="executeWebhookDelete()">
+        <span>🗑️</span>
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Close delete modal when clicking backdrop
+  document.getElementById("confirm-delete-modal").addEventListener("click", function (e) {
+    if (e.target === this) closeWebhookDeleteConfirm();
+  });
+</script>
+{% endblock %}

@@ -1,0 +1,919 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Products · Product Importer{% endblock %}
+
+{% block extra_head %}
+  <style>
+    .container {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      padding: 32px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--color-border);
+    }
+
+    .header {
+      margin-bottom: 32px;
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 24px;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .header-text h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+      color: var(--color-text-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .header-text .subtitle {
+      font-size: 15px;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+
+    .header-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    /* Filters */
+    .filters-section {
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+
+    .filters {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: flex-end;
+    }
+
+    .filter-group {
+      flex: 1;
+      min-width: 200px;
+    }
+
+    .filter-group label {
+      display: block;
+      font-size: 13px;
+      font-weight: 600;
+      margin-bottom: 6px;
+      color: var(--color-text-secondary);
+    }
+
+    .filters input,
+    .filters select {
+      width: 100%;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      font-size: 14px;
+      transition: var(--transition);
+      font-family: inherit;
+      background: var(--color-surface);
+    }
+
+    .filters input:focus,
+    .filters select:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+
+    .filter-actions {
+      display: flex;
+      gap: 8px;
+      align-items: flex-end;
+    }
+
+    .btn-clear {
+      color: var(--color-text-tertiary);
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 10px 14px;
+      border-radius: var(--radius-md);
+      transition: var(--transition);
+    }
+
+    .btn-clear:hover {
+      color: var(--color-text-secondary);
+      background: var(--color-border-light);
+    }
+
+    /* Stats */
+    .stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 20px;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      flex: 1;
+      min-width: 150px;
+      padding: 16px 20px;
+      background: linear-gradient(135deg, var(--color-primary-light) 0%, #faf5ff 100%);
+      border-radius: var(--radius-lg);
+      border: 1px solid #e9d5ff;
+    }
+
+    .stat-label {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 4px;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    /* Table */
+    .table-container {
+      margin-top: 24px;
+      overflow-x: auto;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+
+    thead {
+      background: linear-gradient(to bottom, #fafbfc 0%, #f6f8fa 100%);
+      border-bottom: 2px solid var(--color-border);
+    }
+
+    th {
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--color-text-secondary);
+      white-space: nowrap;
+    }
+
+    tbody tr {
+      border-bottom: 1px solid var(--color-border-light);
+      transition: var(--transition);
+    }
+
+    tbody tr:last-child {
+      border-bottom: none;
+    }
+
+    tbody tr:hover {
+      background: var(--color-bg);
+    }
+
+    td {
+      padding: 16px;
+      vertical-align: top;
+      color: var(--color-text-primary);
+    }
+
+    .product-id {
+      font-weight: 600;
+      color: var(--color-text-tertiary);
+      font-size: 13px;
+    }
+
+    .product-sku {
+      font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+      background: var(--color-border-light);
+      padding: 4px 8px;
+      border-radius: 6px;
+      display: inline-block;
+      font-weight: 500;
+    }
+
+    .product-name {
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 2px;
+    }
+
+    .description {
+      max-width: 400px;
+      color: var(--color-text-secondary);
+      font-size: 13px;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .badge::before {
+      content: '';
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      display: block;
+    }
+
+    .badge-active {
+      background: var(--color-success-light);
+      color: #065f46;
+    }
+
+    .badge-active::before {
+      background: var(--color-success);
+    }
+
+    .badge-inactive {
+      background: var(--color-danger-light);
+      color: #991b1b;
+    }
+
+    .badge-inactive::before {
+      background: var(--color-danger);
+    }
+
+    .cell-actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .btn-sm {
+      padding: 6px 12px;
+      font-size: 13px;
+    }
+
+    /* Pagination */
+    .pagination {
+      margin-top: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      background: var(--color-bg);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border);
+    }
+
+    .pagination-info {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      font-weight: 500;
+    }
+
+    .pagination-info .current {
+      color: var(--color-text-primary);
+      font-weight: 700;
+    }
+
+    .pagination-nav {
+      display: flex;
+      gap: 8px;
+    }
+
+    .pagination-nav a {
+      padding: 8px 16px;
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      color: var(--color-text-primary);
+      font-weight: 600;
+      font-size: 14px;
+      border: 1px solid var(--color-border);
+      background: var(--color-surface);
+      transition: var(--transition);
+    }
+
+    .pagination-nav a:hover {
+      background: var(--color-primary);
+      color: white;
+      border-color: var(--color-primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    /* Modal */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.6);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      animation: fadeIn 0.2s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    .modal-backdrop.show {
+      display: flex;
+    }
+
+    .modal {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      width: 520px;
+      max-width: calc(100% - 32px);
+      box-shadow: var(--shadow-xl);
+      animation: slideUp 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      border: 1px solid var(--color-border);
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(20px) scale(0.95);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .modal-header {
+      padding: 24px 28px;
+      border-bottom: 1px solid var(--color-border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+    }
+
+    .modal-close {
+      width: 32px;
+      height: 32px;
+      border: none;
+      background: var(--color-border-light);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      font-size: 20px;
+      color: var(--color-text-secondary);
+      transition: var(--transition);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .modal-close:hover {
+      background: var(--color-danger-light);
+      color: var(--color-danger);
+    }
+
+    .modal-body {
+      padding: 28px;
+    }
+
+    .modal-field {
+      margin-bottom: 20px;
+    }
+
+    .modal-field:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .modal-field label {
+      display: block;
+      font-size: 14px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--color-text-primary);
+    }
+
+    .modal-field input[type="text"],
+    .modal-field textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--color-border);
+      font-size: 14px;
+      transition: var(--transition);
+      font-family: inherit;
+      background: var(--color-surface);
+    }
+
+    .modal-field textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .modal-field input:focus,
+    .modal-field textarea:focus {
+      outline: none;
+      border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+
+    .checkbox-field {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 14px;
+      background: var(--color-bg);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .checkbox-field:hover {
+      background: var(--color-border-light);
+    }
+
+    .checkbox-field input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+      cursor: pointer;
+      accent-color: var(--color-primary);
+    }
+
+    .checkbox-field label {
+      margin: 0 !important;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .modal-footer {
+      padding: 20px 28px;
+      border-top: 1px solid var(--color-border);
+      display: flex;
+      justify-content: flex-end;
+      gap: 12px;
+      background: var(--color-bg);
+      border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    }
+
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+    }
+
+    .empty-state-icon {
+      font-size: 64px;
+      margin-bottom: 16px;
+      opacity: 0.3;
+    }
+
+    .empty-state-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: 8px;
+    }
+
+    .empty-state-text {
+      font-size: 15px;
+      color: var(--color-text-secondary);
+    }
+
+    #confirm-delete-icon {
+      transition: var(--transition);
+    }
+
+    @media (max-width: 768px) {
+      .container {
+        padding: 20px;
+        border-radius: var(--radius-lg);
+      }
+
+      .header-top {
+        flex-direction: column;
+      }
+
+      .header-text h1 {
+        font-size: 24px;
+      }
+
+      .filters {
+        flex-direction: column;
+      }
+
+      .filter-group {
+        width: 100%;
+      }
+
+      .stats {
+        flex-direction: column;
+      }
+
+      .table-container {
+        border-radius: var(--radius-md);
+      }
+
+      table {
+        font-size: 13px;
+      }
+
+      th, td {
+        padding: 12px;
+      }
+
+      .cell-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="header">
+    <div class="header-top">
+      <div class="header-text">
+        <h1>Products</h1>
+        <p class="subtitle">
+          Manage your product catalog with powerful filtering, editing, and bulk operations
+        </p>
+      </div>
+      <div class="header-actions">
+        <form method="post" action="{% url 'product_bulk_delete' %}" id="bulk-delete-form">
+          {% csrf_token %}
+          <button type="button" class="btn btn-danger" onclick="confirmBulkDelete()">
+            <span>🗑️</span>
+            Delete All
+          </button>
+        </form>
+        <button type="button" class="btn btn-primary" onclick="openCreateModal()">
+          <span>+</span>
+          New Product
+        </button>
+      </div>
+    </div>
+
+    <div class="filters-section">
+      <form method="get" class="filters">
+        <div class="filter-group">
+          <label for="sku-filter">SKU</label>
+          <input type="text" id="sku-filter" name="sku" placeholder="Search by SKU..." value="{{ sku_query }}">
+        </div>
+        <div class="filter-group">
+          <label for="search-filter">Name/Description</label>
+          <input type="text" id="search-filter" name="q" placeholder="Search products..." value="{{ search_query }}">
+        </div>
+        <div class="filter-group">
+          <label for="status-filter">Status</label>
+          <select id="status-filter" name="status">
+            <option value="">All statuses</option>
+            <option value="active" {% if status == 'active' %}selected{% endif %}>Active only</option>
+            <option value="inactive" {% if status == 'inactive' %}selected{% endif %}>Inactive only</option>
+          </select>
+        </div>
+        <div class="filter-actions">
+          <button type="submit" class="btn btn-primary">Apply Filters</button>
+          {% if sku_query or search_query or status %}
+            <a href="{% url 'product_list' %}" class="btn-clear">Clear</a>
+          {% endif %}
+        </div>
+      </form>
+
+      <div class="stats">
+        <div class="stat-card">
+          <div class="stat-label">Total Products</div>
+          <div class="stat-value">{{ page_obj.paginator.count }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if page_obj.object_list %}
+    <div class="table-container">
+      <table>
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Status</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+        {% for product in page_obj.object_list %}
+          <tr
+            data-product-id="{{ product.id }}"
+            data-product-sku="{{ product.sku|escapejs }}"
+            data-product-name="{{ product.name|escapejs }}"
+            data-product-description="{{ product.description|escapejs }}"
+            data-product-active="{{ product.active|yesno:'true,false' }}"
+          >
+            <td><span class="product-sku">{{ product.sku }}</span></td>
+            <td>
+              <div class="product-name">{{ product.name }}</div>
+            </td>
+            <td>
+              {% if product.description %}
+                <div class="description">{{ product.description }}</div>
+              {% else %}
+                <span style="color: var(--color-text-tertiary); font-style: italic;">No description</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if product.active %}
+                <span class="badge badge-active">Active</span>
+              {% else %}
+                <span class="badge badge-inactive">Inactive</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="cell-actions">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="openEditModal(this)">
+                  Edit
+                </button>
+                <form method="post" action="{% url 'product_delete' product.id %}" class="delete-form" style="display: inline;">
+                  {% csrf_token %}
+                  <button type="button" class="btn btn-danger btn-sm" onclick="confirmDelete(this)">
+                    Delete
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="pagination">
+      <div class="pagination-info">
+        Page <span class="current">{{ page_obj.number }}</span> of {{ page_obj.paginator.num_pages }}
+        <span style="margin: 0 8px;">·</span>
+        {{ page_obj.paginator.count }} total products
+      </div>
+      <div class="pagination-nav">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}&sku={{ sku_query }}&q={{ search_query }}&status={{ status }}">
+            ← Previous
+          </a>
+        {% endif %}
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}&sku={{ sku_query }}&q={{ search_query }}&status={{ status }}">
+            Next →
+          </a>
+        {% endif %}
+      </div>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <div class="empty-state-icon">📦</div>
+      <div class="empty-state-title">No products found</div>
+      <div class="empty-state-text">
+        {% if sku_query or search_query or status %}
+          Try adjusting your filters or <a href="{% url 'product_list' %}">clear all filters</a>
+        {% else %}
+          Get started by creating your first product
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
+</div>
+
+<!-- Modal: Create / Edit -->
+<div class="modal-backdrop" id="product-modal-backdrop">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">New Product</div>
+      <button type="button" class="modal-close" onclick="closeModal()">×</button>
+    </div>
+    <form method="post" id="product-form">
+      <div class="modal-body">
+        {% csrf_token %}
+        <div class="modal-field">
+          <label for="modal-sku">SKU *</label>
+          <input type="text" id="modal-sku" name="sku" required placeholder="Enter unique SKU">
+        </div>
+        <div class="modal-field">
+          <label for="modal-name">Product Name *</label>
+          <input type="text" id="modal-name" name="name" required placeholder="Enter product name">
+        </div>
+        <div class="modal-field">
+          <label for="modal-description">Description</label>
+          <textarea id="modal-description" name="description" placeholder="Enter product description (optional)"></textarea>
+        </div>
+        <div class="modal-field">
+          <div class="checkbox-field">
+            <input type="checkbox" id="modal-active" name="active" checked>
+            <label for="modal-active">Mark this product as active</label>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="modal-submit-btn">Save Product</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<script>
+  const modalBackdrop = document.getElementById("product-modal-backdrop");
+  const modalTitle = document.getElementById("modal-title");
+  const modalSku = document.getElementById("modal-sku");
+  const modalName = document.getElementById("modal-name");
+  const modalDescription = document.getElementById("modal-description");
+  const modalActive = document.getElementById("modal-active");
+  const productForm = document.getElementById("product-form");
+  const modalSubmitBtn = document.getElementById("modal-submit-btn");
+
+  function openCreateModal() {
+    modalTitle.textContent = "New Product";
+    productForm.action = "{% url 'product_create' %}";
+    modalSku.value = "";
+    modalName.value = "";
+    modalDescription.value = "";
+    modalActive.checked = true;
+    modalBackdrop.classList.add("show");
+    setTimeout(() => modalSku.focus(), 100);
+  }
+
+  function openEditModal(buttonEl) {
+    const row = buttonEl.closest("tr");
+    const id = row.dataset.productId;
+    const sku = row.dataset.productSku || "";
+    const name = row.dataset.productName || "";
+    const description = row.dataset.productDescription || "";
+    const active = row.dataset.productActive === "true";
+
+    modalTitle.textContent = "Edit Product";
+    productForm.action = "/products/" + id + "/update/";
+    modalSku.value = sku;
+    modalName.value = name;
+    modalDescription.value = description;
+    modalActive.checked = active;
+    modalBackdrop.classList.add("show");
+    setTimeout(() => modalName.focus(), 100);
+  }
+
+  function closeModal() {
+    modalBackdrop.classList.remove("show");
+  }
+
+  // Delete confirmation modal
+  let pendingDeleteForm = null;
+  let pendingBulkDelete = false;
+
+  function confirmDelete(buttonEl) {
+    pendingDeleteForm = buttonEl.closest("form");
+    const sku = buttonEl.closest("tr").dataset.productSku || "this product";
+    showDeleteConfirm("Delete Product", `Are you sure you want to delete "${sku}"? This action cannot be undone.`);
+  }
+
+  function confirmBulkDelete() {
+    pendingBulkDelete = true;
+    showDeleteConfirm("Delete All Products", "⚠️ WARNING: This will permanently delete ALL products in your database. This action cannot be undone. Are you absolutely sure?", true);
+  }
+
+  function showDeleteConfirm(title, message, isBulk = false) {
+    const confirmModal = document.getElementById("confirm-delete-modal");
+    const confirmTitle = document.getElementById("confirm-delete-title");
+    const confirmMessage = document.getElementById("confirm-delete-message");
+    const confirmIcon = document.getElementById("confirm-delete-icon");
+    
+    confirmTitle.textContent = title;
+    confirmMessage.textContent = message;
+    
+    if (isBulk) {
+      confirmIcon.textContent = "⚠️";
+      confirmIcon.style.background = "linear-gradient(135deg, #f59e0b 0%, #ef4444 100%)";
+    } else {
+      confirmIcon.textContent = "🗑️";
+      confirmIcon.style.background = "linear-gradient(135deg, var(--color-danger) 0%, #dc2626 100%)";
+    }
+    
+    confirmModal.classList.add("show");
+  }
+
+  function executeDelete() {
+    if (pendingDeleteForm) {
+      pendingDeleteForm.submit();
+    } else if (pendingBulkDelete) {
+      document.getElementById("bulk-delete-form").submit();
+    }
+    closeDeleteConfirm();
+  }
+
+  function closeDeleteConfirm() {
+    document.getElementById("confirm-delete-modal").classList.remove("show");
+    pendingDeleteForm = null;
+    pendingBulkDelete = false;
+  }
+
+  modalBackdrop.addEventListener("click", function (e) {
+    if (e.target === modalBackdrop) closeModal();
+  });
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape") {
+      if (document.getElementById("confirm-delete-modal").classList.contains("show")) {
+        closeDeleteConfirm();
+      } else {
+        closeModal();
+      }
+    }
+  });
+
+  // Ensure CSRF token is included in form submission
+  productForm.addEventListener("submit", function(e) {
+    // Get CSRF token from cookie if not in form
+    const existingToken = productForm.querySelector('input[name="csrfmiddlewaretoken"]');
+    if (!existingToken || !existingToken.value) {
+      const csrftoken = getCookie('csrftoken');
+      if (csrftoken) {
+        if (!existingToken) {
+          const tokenInput = document.createElement('input');
+          tokenInput.type = 'hidden';
+          tokenInput.name = 'csrfmiddlewaretoken';
+          tokenInput.value = csrftoken;
+          productForm.appendChild(tokenInput);
+        } else {
+          existingToken.value = csrftoken;
+        }
+      }
+    }
+  });
+
+  // Helper function to get CSRF token from cookie
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let i = 0; i < cookies.length; i++) {
+        const cookie = cookies[i].trim();
+        if (cookie.substring(0, name.length + 1) === (name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+</script>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal-backdrop" id="confirm-delete-modal">
+  <div class="modal" style="width: 460px;">
+    <div class="modal-header">
+      <div class="modal-title" style="display: flex; align-items: center; gap: 12px;">
+        <div id="confirm-delete-icon" style="width: 40px; height: 40px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; font-size: 20px; color: white; box-shadow: var(--shadow-sm);"></div>
+        <span id="confirm-delete-title">Delete Product</span>
+      </div>
+      <button type="button" class="modal-close" onclick="closeDeleteConfirm()">×</button>
+    </div>
+    <div class="modal-body">
+      <p id="confirm-delete-message" style="font-size: 15px; color: var(--color-text-secondary); line-height: 1.6; margin: 0;"></p>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeDeleteConfirm()">Cancel</button>
+      <button type="button" class="btn btn-danger" onclick="executeDelete()">
+        <span>🗑️</span>
+        Delete
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+  // Close delete modal when clicking backdrop
+  document.getElementById("confirm-delete-modal").addEventListener("click", function (e) {
+    if (e.target === this) closeDeleteConfirm();
+  });
+</script>
+{% endblock %}  

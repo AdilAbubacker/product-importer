@@ -1,0 +1,973 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block title %}Upload Products · Product Importer{% endblock %}
+
+{% block extra_head %}
+  <style>
+    .upload-container {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .upload-card {
+      background: var(--color-surface);
+      border-radius: var(--radius-xl);
+      padding: 40px;
+      box-shadow: var(--shadow-lg);
+      border: 1px solid var(--color-border);
+    }
+
+    .upload-header {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .upload-icon {
+      width: 80px;
+      height: 80px;
+      background: linear-gradient(135deg, var(--color-primary) 0%, #8b5cf6 100%);
+      border-radius: var(--radius-xl);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 40px;
+      margin: 0 auto 20px;
+      box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+    }
+
+    .upload-header h1 {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--color-text-primary);
+      letter-spacing: -0.5px;
+    }
+
+    .upload-header .subtitle {
+      font-size: 16px;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    /* File Upload Area */
+    .upload-zone {
+      border: 2px dashed var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 48px 32px;
+      text-align: center;
+      transition: var(--transition);
+      cursor: pointer;
+      background: var(--color-bg);
+      margin-bottom: 24px;
+    }
+
+    .upload-zone:hover {
+      border-color: var(--color-primary);
+      background: var(--color-primary-light);
+    }
+
+    .upload-zone.drag-over {
+      border-color: var(--color-primary);
+      background: var(--color-primary-light);
+      border-style: solid;
+    }
+
+    .upload-zone-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.6;
+    }
+
+    .upload-zone-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 8px;
+    }
+
+    .upload-zone-text {
+      font-size: 14px;
+      color: var(--color-text-secondary);
+      margin-bottom: 16px;
+    }
+
+    .upload-zone-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 12px 24px;
+      background: var(--color-primary);
+      color: white;
+      border: none;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 15px;
+      cursor: pointer;
+      transition: var(--transition);
+    }
+
+    .upload-zone-btn:hover {
+      background: var(--color-primary-hover);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    #csv-file {
+      display: none;
+    }
+
+    .file-selected {
+      margin-top: 16px;
+      padding: 16px 20px;
+      background: var(--color-success-light);
+      border: 1px solid #a7f3d0;
+      border-radius: var(--radius-md);
+      display: none;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .file-selected.show {
+      display: flex;
+    }
+
+    .file-icon {
+      font-size: 24px;
+    }
+
+    .file-info {
+      flex: 1;
+    }
+
+    .file-name {
+      font-weight: 600;
+      color: #065f46;
+      margin-bottom: 2px;
+    }
+
+    .file-size {
+      font-size: 13px;
+      color: #059669;
+    }
+
+    /* Info Cards */
+    .info-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 32px;
+    }
+
+    .info-card {
+      padding: 20px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+    }
+
+    .info-card-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .info-card-text {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      line-height: 1.6;
+    }
+
+    /* Unified Progress Section */
+    .progress-section {
+      background: var(--color-surface);
+      border: 2px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 32px;
+      margin-top: 32px;
+      display: none;
+    }
+
+    .progress-section.show {
+      display: block;
+      animation: slideUp 0.3s ease;
+    }
+
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .progress-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 28px;
+    }
+
+    .progress-title {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .progress-phase-icon {
+      width: 44px;
+      height: 44px;
+      background: var(--color-primary-light);
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      transition: all 0.3s ease;
+    }
+
+    .progress-phase-icon.active {
+      background: var(--color-primary);
+      color: white;
+      animation: iconPulse 2s ease infinite;
+    }
+
+    @keyframes iconPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.05); }
+    }
+
+    .progress-status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 16px;
+      background: var(--color-primary-light);
+      color: var(--color-primary);
+      border-radius: 999px;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      background: currentColor;
+      border-radius: 50%;
+      animation: pulse 2s ease infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .progress-status-badge.success {
+      background: var(--color-success-light);
+      color: #065f46;
+    }
+
+    .progress-status-badge.error {
+      background: var(--color-danger-light);
+      color: #991b1b;
+    }
+
+    /* Unified Progress Bar */
+    .unified-progress {
+      margin-bottom: 24px;
+    }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .progress-label {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--color-text-primary);
+    }
+
+    .progress-percentage {
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--color-primary);
+    }
+
+    .progress-bar-wrapper {
+      width: 100%;
+      height: 14px;
+      background: var(--color-border-light);
+      border-radius: 999px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--color-primary) 0%, #8b5cf6 100%);
+      transition: width 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Shimmer effect for determinate progress */
+    .progress-bar-fill.uploading::after,
+    .progress-bar-fill.importing::after {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+      animation: shimmer 2s infinite;
+    }
+
+    @keyframes shimmer {
+      0% { transform: translateX(-100%); }
+      100% { transform: translateX(100%); }
+    }
+
+    /* Indeterminate loading animation for parsing */
+    .progress-bar-fill.parsing {
+      width: 100% !important;
+      background: var(--color-border-light);
+    }
+
+    .progress-bar-fill.parsing::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 40%;
+      background: linear-gradient(90deg, var(--color-primary) 0%, #8b5cf6 100%);
+      animation: indeterminateSlide 1.5s ease-in-out infinite;
+    }
+
+    @keyframes indeterminateSlide {
+      0% { left: -40%; }
+      50% { left: 50%; }
+      100% { left: 110%; }
+    }
+
+    .progress-bar-fill.complete {
+      background: var(--color-success);
+    }
+
+    .progress-details {
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* Activity Log */
+    .activity-log {
+      margin-top: 28px;
+      background: var(--color-bg);
+      border: 1px solid var(--color-border);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      max-height: 240px;
+      overflow-y: auto;
+    }
+
+    .log-header {
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .log-entries {
+      font-family: 'SF Mono', 'Monaco', 'Courier New', monospace;
+      font-size: 13px;
+    }
+
+    .log-entry {
+      padding: 8px 0;
+      display: flex;
+      gap: 12px;
+      color: var(--color-text-secondary);
+      line-height: 1.5;
+    }
+
+    .log-entry:not(:last-child) {
+      border-bottom: 1px solid var(--color-border-light);
+    }
+
+    .log-time {
+      color: var(--color-text-tertiary);
+      font-size: 12px;
+      min-width: 70px;
+    }
+
+    .log-message {
+      flex: 1;
+    }
+
+    .log-entry.success .log-message {
+      color: #059669;
+    }
+
+    .log-entry.error .log-message {
+      color: #dc2626;
+    }
+
+    .log-entry.info .log-icon {
+      color: var(--color-primary);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-top: 24px;
+      padding: 24px;
+      background: var(--color-bg);
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--color-border);
+    }
+
+    .stat-item {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: 6px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .stat-label {
+      font-size: 12px;
+      color: var(--color-text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      font-weight: 600;
+    }
+
+    /* Success/Error Message */
+    .message-banner {
+      margin-top: 20px;
+      padding: 16px 20px;
+      border-radius: var(--radius-lg);
+      font-size: 14px;
+      font-weight: 500;
+      display: none;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .message-banner.show {
+      display: flex;
+      animation: slideUp 0.3s ease;
+    }
+
+    .message-banner.success {
+      background: var(--color-success-light);
+      color: #065f46;
+      border: 1px solid #a7f3d0;
+    }
+
+    .message-banner.error {
+      background: var(--color-danger-light);
+      color: #991b1b;
+      border: 1px solid #fecaca;
+    }
+
+    .message-icon {
+      font-size: 20px;
+    }
+
+    @media (max-width: 768px) {
+      .upload-card {
+        padding: 24px;
+      }
+
+      .upload-header h1 {
+        font-size: 24px;
+      }
+
+      .upload-zone {
+        padding: 32px 20px;
+      }
+
+      .info-cards {
+        grid-template-columns: 1fr;
+      }
+
+      .progress-section {
+        padding: 20px;
+      }
+
+      .stats-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .progress-header {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+    }
+  </style>
+{% endblock %}
+
+{% block content %}
+<div class="upload-container">
+  <div class="upload-card">
+    <div class="upload-header">
+      <div class="upload-icon">📤</div>
+      <h1>Upload Products</h1>
+      <p class="subtitle">
+        Import products from CSV files with real-time progress tracking. Supports up to 500,000 records with automatic duplicate handling.
+      </p>
+    </div>
+
+    <div class="upload-zone" id="upload-zone">
+      <div class="upload-zone-icon">📄</div>
+      <div class="upload-zone-title">Drag & drop your CSV file here</div>
+      <div class="upload-zone-text">or click to browse your computer</div>
+      <label for="csv-file" class="upload-zone-btn">
+        <span>📁</span>
+        Choose File
+      </label>
+      <input id="csv-file" type="file" accept=".csv" />
+    </div>
+
+    <div class="file-selected" id="file-selected">
+      <div class="file-icon">✅</div>
+      <div class="file-info">
+        <div class="file-name" id="file-name"></div>
+        <div class="file-size" id="file-size"></div>
+      </div>
+    </div>
+
+    <div class="info-cards">
+      <div class="info-card">
+        <div class="info-card-title">
+          <span>📋</span>
+          Required Columns
+        </div>
+        <div class="info-card-text">
+          CSV must contain: <code>sku</code>, <code>name</code>, and <code>description</code>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">
+          <span>🔄</span>
+          Duplicate Handling
+        </div>
+        <div class="info-card-text">
+          Products with matching SKUs (case-insensitive) will be automatically updated
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="info-card-title">
+          <span>⚡</span>
+          Background Processing
+        </div>
+        <div class="info-card-text">
+          Large imports run asynchronously without blocking your workflow
+        </div>
+      </div>
+    </div>
+
+    <button id="upload-btn" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 16px;" disabled>
+      <span>🚀</span>
+      Start Upload
+    </button>
+  </div>
+
+  <div class="progress-section" id="progress-section">
+    <div class="progress-header">
+      <div class="progress-title">
+        <div class="progress-phase-icon" id="phase-icon">📤</div>
+        <span id="phase-title">Upload Phase</span>
+      </div>
+      <div class="progress-status-badge" id="status-badge">
+        <span class="status-dot"></span>
+        <span id="status-text">Initializing...</span>
+      </div>
+    </div>
+
+    <div class="unified-progress">
+      <div class="progress-info">
+        <div class="progress-label" id="progress-label">Preparing upload...</div>
+        <div class="progress-percentage" id="progress-percent">0%</div>
+      </div>
+      <div class="progress-bar-wrapper">
+        <div class="progress-bar-fill" id="progress-bar"></div>
+      </div>
+      <div class="progress-details" id="progress-details">
+        <span>⏱️</span>
+        <span id="progress-detail-text">Waiting to start...</span>
+      </div>
+    </div>
+
+    <div class="stats-grid" id="stats-grid" style="display: none;">
+      <div class="stat-item">
+        <div class="stat-value" id="stat-processed">0</div>
+        <div class="stat-label">Processed</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="stat-total">0</div>
+        <div class="stat-label">Total Rows</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="stat-created">0</div>
+        <div class="stat-label">Created</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value" id="stat-updated">0</div>
+        <div class="stat-label">Updated</div>
+      </div>
+    </div>
+
+    <div class="activity-log">
+      <div class="log-header">
+        <span>📝</span>
+        Activity Log
+      </div>
+      <div class="log-entries" id="log-entries"></div>
+    </div>
+
+    <div class="message-banner" id="message-banner">
+      <span class="message-icon" id="message-icon"></span>
+      <span id="message-text"></span>
+    </div>
+  </div>
+</div>
+
+<script>
+  const uploadBtn = document.getElementById("upload-btn");
+  const fileInput = document.getElementById("csv-file");
+  const uploadZone = document.getElementById("upload-zone");
+  const fileSelected = document.getElementById("file-selected");
+  const fileName = document.getElementById("file-name");
+  const fileSize = document.getElementById("file-size");
+  const progressSection = document.getElementById("progress-section");
+
+  const phaseIcon = document.getElementById("phase-icon");
+  const phaseTitle = document.getElementById("phase-title");
+  const progressBar = document.getElementById("progress-bar");
+  const progressPercent = document.getElementById("progress-percent");
+  const progressLabel = document.getElementById("progress-label");
+  const progressDetails = document.getElementById("progress-detail-text");
+
+  const statusBadge = document.getElementById("status-badge");
+  const statusText = document.getElementById("status-text");
+  const messageBanner = document.getElementById("message-banner");
+  const messageIcon = document.getElementById("message-icon");
+  const messageText = document.getElementById("message-text");
+  const statsGrid = document.getElementById("stats-grid");
+  const logEntries = document.getElementById("log-entries");
+
+  let currentJobId = null;
+  let statusInterval = null;
+  let selectedFile = null;
+  let currentPhase = 'idle'; // idle, uploading, parsing, importing, complete
+
+  // File selection handlers
+  fileInput.addEventListener("change", handleFileSelect);
+  uploadZone.addEventListener("click", () => fileInput.click());
+  uploadZone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+    uploadZone.classList.add("drag-over");
+  });
+  uploadZone.addEventListener("dragleave", () => {
+    uploadZone.classList.remove("drag-over");
+  });
+  uploadZone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    uploadZone.classList.remove("drag-over");
+    if (e.dataTransfer.files.length) {
+      fileInput.files = e.dataTransfer.files;
+      handleFileSelect();
+    }
+  });
+
+  function handleFileSelect() {
+    const file = fileInput.files[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.csv')) {
+      alert("Please select a CSV file");
+      return;
+    }
+
+    selectedFile = file;
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    fileSelected.classList.add("show");
+    uploadBtn.disabled = false;
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function addLog(message, type = 'info') {
+    const entry = document.createElement('div');
+    entry.className = `log-entry ${type}`;
+    const time = new Date().toLocaleTimeString();
+    entry.innerHTML = `
+      <span class="log-time">${time}</span>
+      <span class="log-message">${message}</span>
+    `;
+    logEntries.appendChild(entry);
+    logEntries.parentElement.scrollTop = logEntries.parentElement.scrollHeight;
+  }
+
+  function updatePhase(phase, icon, title) {
+    currentPhase = phase;
+    phaseIcon.textContent = icon;
+    phaseTitle.textContent = title;
+    phaseIcon.classList.add('active');
+    
+    // Update progress bar class
+    progressBar.className = 'progress-bar-fill ' + phase;
+  }
+
+  function updateProgress(percent, label, details) {
+    if (currentPhase !== 'parsing') {
+      progressPercent.textContent = percent + '%';
+      progressBar.style.width = percent + '%';
+    }
+    progressLabel.textContent = label;
+    progressDetails.textContent = details;
+  }
+
+  function updateStatus(text, type = 'primary') {
+    statusText.textContent = text;
+    statusBadge.className = 'progress-status-badge ' + type;
+  }
+
+  function showMessage(text, type, icon) {
+    messageIcon.textContent = icon;
+    messageText.textContent = text;
+    messageBanner.className = `message-banner ${type} show`;
+  }
+
+  uploadBtn.addEventListener("click", async () => {
+    if (!selectedFile) {
+      alert("Please select a CSV file first");
+      return;
+    }
+
+    resetUI();
+    uploadBtn.disabled = true;
+    progressSection.classList.add("show");
+    progressSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+    try {
+      addLog("Starting upload process...", "info");
+      updateStatus("Requesting upload URL...");
+      updateProgress(0, "Initializing...", "Connecting to server...");
+
+      const resp = await fetch("/api/imports/create-upload/", {
+        method: "POST",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+      });
+
+      if (!resp.ok) throw new Error("Failed to get upload URL");
+
+      const data = await resp.json();
+      currentJobId = data.job_id;
+      addLog(`Received upload URL (Job ID: ${currentJobId})`, "success");
+
+      // Phase 1: Upload
+      updatePhase('uploading', '📤', 'Upload Phase');
+      updateStatus("Uploading file...");
+      addLog("Uploading file to cloud storage...", "info");
+
+      await uploadFileToR2(data.upload_url, selectedFile);
+
+      addLog("Upload complete!", "success");
+      updateProgress(100, "Upload complete", "File transferred successfully");
+
+      // Start import job
+      updateStatus("Starting import...");
+      addLog("Triggering import job...", "info");
+
+      const startResp = await fetch(`/api/imports/${currentJobId}/start/`, {
+        method: "POST",
+        headers: {
+          "X-Requested-With": "XMLHttpRequest",
+          "X-CSRFToken": getCookie("csrftoken"),
+        },
+      });
+
+      if (!startResp.ok) throw new Error("Failed to start import");
+
+      addLog("Import job queued successfully", "success");
+
+      // Phase 2: Parsing (indeterminate)
+      updatePhase('parsing', '🔍', 'Parsing Phase');
+      updateStatus("Parsing CSV...");
+      updateProgress(0, "Parsing CSV file...", "Analyzing file structure and validating data...");
+      progressPercent.style.opacity = '0'; // Hide percentage during parsing
+
+      // Start polling
+      pollStatus(currentJobId);
+
+    } catch (err) {
+      console.error(err);
+      updateStatus("Error", "error");
+      showMessage(err.message || "Upload failed", "error", "❌");
+      addLog(`Error: ${err.message}`, "error");
+      uploadBtn.disabled = false;
+      phaseIcon.classList.remove('active');
+    }
+  });
+
+  async function uploadFileToR2(uploadUrl, file) {
+    return new Promise((resolve, reject) => {
+      const xhr = new XMLHttpRequest();
+      xhr.open("PUT", uploadUrl, true);
+      xhr.setRequestHeader("Content-Type", file.type || "text/csv");
+
+      xhr.upload.onprogress = function (event) {
+        if (event.lengthComputable) {
+          const percent = Math.round((event.loaded / event.total) * 100);
+          updateProgress(
+            percent,
+            `Uploading... ${percent}%`,
+            `${formatFileSize(event.loaded)} / ${formatFileSize(event.total)}`
+          );
+        }
+      };
+
+      xhr.onload = function () {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          resolve();
+        } else {
+          reject(new Error(`Upload failed (${xhr.status})`));
+        }
+      };
+
+      xhr.onerror = () => reject(new Error("Network error"));
+      xhr.send(file);
+    });
+  }
+
+  function pollStatus(jobId) {
+    if (statusInterval) clearInterval(statusInterval);
+
+    let hasStartedImporting = false;
+
+    statusInterval = setInterval(async () => {
+      try {
+        const resp = await fetch(`/api/imports/${jobId}/status/`, {
+          headers: { "X-Requested-With": "XMLHttpRequest" },
+        });
+        if (!resp.ok) return;
+
+        const data = await resp.json();
+
+        // Check if we've moved from parsing to importing
+        if ((data.status === 'importing' || data.total_rows > 0) && !hasStartedImporting) {
+          hasStartedImporting = true;
+          
+          // Phase 3: Importing (determinate)
+          updatePhase('importing', '⚙️', 'Import Phase');
+          progressPercent.style.opacity = '1'; // Show percentage again
+          statsGrid.style.display = 'grid';
+          addLog(`Starting import of ${data.total_rows} rows...`, "info");
+        }
+
+        if (hasStartedImporting) {
+          const pct = data.percentage || 0;
+          updateProgress(
+            pct,
+            "Importing products...",
+            `Processing: ${data.processed_rows || 0} / ${data.total_rows || 0} rows`
+          );
+
+          document.getElementById("stat-processed").textContent = data.processed_rows || 0;
+          document.getElementById("stat-total").textContent = data.total_rows || 0;
+          document.getElementById("stat-created").textContent = data.created || 0;
+          document.getElementById("stat-updated").textContent = data.updated || 0;
+        }
+
+        if (data.status === "completed") {
+          clearInterval(statusInterval);
+          progressBar.classList.add('complete');
+          phaseIcon.classList.remove('active');
+          updatePhase('complete', '✅', 'Complete');
+          updateStatus("Import completed!", "success");
+          updateProgress(100, "Import complete!", `Successfully imported ${data.processed_rows || 0} products`);
+          showMessage(`Successfully imported ${data.processed_rows || 0} products!`, "success", "🎉");
+          addLog(`Import completed successfully! Total: ${data.processed_rows || 0} rows`, "success");
+          uploadBtn.disabled = false;
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }, 1500);
+  }
+
+  function resetUI() {
+    progressPercent.textContent = "0%";
+    progressPercent.style.opacity = "1";
+    progressBar.style.width = "0%";
+    progressBar.className = "progress-bar-fill";
+    phaseIcon.className = "progress-phase-icon";
+    phaseIcon.textContent = "📤";
+    phaseTitle.textContent = "Upload Phase";
+    messageBanner.className = "message-banner";
+    statsGrid.style.display = "none";
+    logEntries.innerHTML = "";
+    currentPhase = "idle";
+    document.getElementById("stat-processed").textContent = "0";
+    document.getElementById("stat-total").textContent = "0";
+    document.getElementById("stat-created").textContent = "0";
+    document.getElementById("stat-updated").textContent = "0";
+  }
+
+  function getCookie(name) {
+    const value = `; ${document.cookie}`;
+    const parts = value.split(`; ${name}=`);
+    if (parts.length === 2) return parts.pop().split(";").shift();
+  }
+</script>
+{% endblock %}disabled = false;
+        } else if (data.status === "failed") {
+          clearInterval(statusInterval);
+          phaseIcon.textContent = "❌";
+          phaseIcon.classList.remove('active');
+          updateStatus("Import failed", "error");
+          showMessage(data.error_message || "Import failed", "error", "❌");
+          addLog(`Import failed: ${data.error_message}`, "error");
+          uploadBtn.
