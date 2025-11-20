@@ -1,15 +1,14 @@
-
+# products/urls.py
 from django.urls import path
-from rest_framework.routers import DefaultRouter
-from .views import ProductViewSet, product_list_page, product_form_page, ProductBulkDeleteView
-
-router = DefaultRouter()
-router.register(r"products", ProductViewSet, basename="products")
+from . import views
 
 urlpatterns = [
-    path("products-ui/", product_list_page),
-    path("product-form/", product_form_page),
-    path("products/bulk-delete/", ProductBulkDeleteView.as_view()),
-]
+    path("products/", views.product_list, name="product_list"),
+    path("products/create/", views.product_create, name="product_create"),
 
-urlpatterns += router.urls
+    # change int -> uuid here:
+    path("products/<uuid:pk>/update/", views.product_update, name="product_update"),
+    path("products/<uuid:pk>/delete/", views.product_delete, name="product_delete"),
+
+    path("products/bulk-delete/", views.product_bulk_delete, name="product_bulk_delete"),
+]
