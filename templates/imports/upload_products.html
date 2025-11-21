@@ -16,8 +16,31 @@
       padding: 40px;
       box-shadow: var(--shadow-lg);
       border: 1px solid var(--color-border);
+      transition: all 0.4s ease;
     }
 
+    /* State management */
+    .view {
+      display: none;
+    }
+
+    .view.active {
+      display: block;
+      animation: fadeIn 0.4s ease;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+        transform: translateY(10px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    /* Upload View */
     .upload-header {
       text-align: center;
       margin-bottom: 40px;
@@ -52,7 +75,6 @@
       margin: 0 auto;
     }
 
-    /* File Upload Area */
     .upload-zone {
       border: 2px dashed var(--color-border);
       border-radius: var(--radius-lg);
@@ -153,7 +175,6 @@
       color: #059669;
     }
 
-    /* Info Cards */
     .info-cards {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -184,41 +205,18 @@
       line-height: 1.6;
     }
 
-    /* Unified Progress Section */
-    .progress-section {
-      background: var(--color-surface);
-      border: 2px solid var(--color-border);
-      border-radius: var(--radius-lg);
-      padding: 32px;
-      margin-top: 32px;
-      display: none;
-    }
-
-    .progress-section.show {
-      display: block;
-      animation: slideUp 0.3s ease;
-    }
-
-    @keyframes slideUp {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
+    /* Progress View */
     .progress-header {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      margin-bottom: 28px;
+      margin-bottom: 32px;
+      padding-bottom: 24px;
+      border-bottom: 2px solid var(--color-border);
     }
 
     .progress-title {
-      font-size: 20px;
+      font-size: 24px;
       font-weight: 700;
       color: var(--color-text-primary);
       display: flex;
@@ -227,14 +225,14 @@
     }
 
     .progress-phase-icon {
-      width: 44px;
-      height: 44px;
+      width: 48px;
+      height: 48px;
       background: var(--color-primary-light);
       border-radius: var(--radius-md);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 22px;
+      font-size: 24px;
       transition: all 0.3s ease;
     }
 
@@ -284,9 +282,8 @@
       color: #991b1b;
     }
 
-    /* Unified Progress Bar */
     .unified-progress {
-      margin-bottom: 24px;
+      margin-bottom: 32px;
     }
 
     .progress-info {
@@ -303,7 +300,7 @@
     }
 
     .progress-percentage {
-      font-size: 20px;
+      font-size: 22px;
       font-weight: 700;
       color: var(--color-primary);
     }
@@ -326,7 +323,6 @@
       overflow: hidden;
     }
 
-    /* Shimmer effect for determinate progress */
     .progress-bar-fill.uploading::after,
     .progress-bar-fill.importing::after {
       content: '';
@@ -344,7 +340,6 @@
       100% { transform: translateX(100%); }
     }
 
-    /* Indeterminate loading animation for parsing */
     .progress-bar-fill.parsing {
       width: 100% !important;
       background: var(--color-border-light);
@@ -380,7 +375,6 @@
       gap: 8px;
     }
 
-    /* Activity Log */
     .activity-log {
       margin-top: 28px;
       background: var(--color-bg);
@@ -436,11 +430,6 @@
       color: #dc2626;
     }
 
-    .log-entry.info .log-icon {
-      color: var(--color-primary);
-    }
-
-    /* Stats Grid */
     .stats-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
@@ -472,7 +461,6 @@
       font-weight: 600;
     }
 
-    /* Success/Error Message */
     .message-banner {
       margin-top: 20px;
       padding: 16px 20px;
@@ -486,7 +474,7 @@
 
     .message-banner.show {
       display: flex;
-      animation: slideUp 0.3s ease;
+      animation: fadeIn 0.3s ease;
     }
 
     .message-banner.success {
@@ -503,6 +491,94 @@
 
     .message-icon {
       font-size: 20px;
+    }
+
+    /* Success View */
+    .success-animation {
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .checkmark-circle {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 24px;
+      background: var(--color-success);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: scaleIn 0.5s ease;
+    }
+
+    @keyframes scaleIn {
+      0% { transform: scale(0); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+
+    .checkmark-circle svg {
+      width: 60px;
+      height: 60px;
+      stroke: white;
+      stroke-width: 3;
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      fill: none;
+      animation: drawCheck 0.5s ease 0.3s forwards;
+      stroke-dasharray: 100;
+      stroke-dashoffset: 100;
+    }
+
+    @keyframes drawCheck {
+      to { stroke-dashoffset: 0; }
+    }
+
+    .success-title {
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--color-text-primary);
+      margin-bottom: 12px;
+    }
+
+    .success-subtitle {
+      font-size: 16px;
+      color: var(--color-text-secondary);
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+
+    .success-stats {
+      display: flex;
+      justify-content: center;
+      gap: 32px;
+      margin-bottom: 32px;
+      padding: 24px;
+      background: var(--color-bg);
+      border-radius: var(--radius-lg);
+    }
+
+    .success-stat {
+      text-align: center;
+    }
+
+    .success-stat-value {
+      font-size: 32px;
+      font-weight: 700;
+      color: var(--color-primary);
+      margin-bottom: 6px;
+    }
+
+    .success-stat-label {
+      font-size: 13px;
+      color: var(--color-text-secondary);
+      font-weight: 600;
+    }
+
+    .button-group {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
     }
 
     @media (max-width: 768px) {
@@ -522,10 +598,6 @@
         grid-template-columns: 1fr;
       }
 
-      .progress-section {
-        padding: 20px;
-      }
-
       .stats-grid {
         grid-template-columns: repeat(2, 1fr);
       }
@@ -535,6 +607,15 @@
         gap: 12px;
         align-items: flex-start;
       }
+
+      .success-stats {
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .button-group {
+        flex-direction: column;
+      }
     }
   </style>
 {% endblock %}
@@ -542,137 +623,184 @@
 {% block content %}
 <div class="upload-container">
   <div class="upload-card">
-    <div class="upload-header">
-      <div class="upload-icon">📤</div>
-      <h1>Upload Products</h1>
-      <p class="subtitle">
-        Import products from CSV files with real-time progress tracking. Supports up to 500,000 records with automatic duplicate handling.
-      </p>
-    </div>
-
-    <div class="upload-zone" id="upload-zone">
-      <div class="upload-zone-icon">📄</div>
-      <div class="upload-zone-title">Drag & drop your CSV file here</div>
-      <div class="upload-zone-text">or click to browse your computer</div>
-      <label for="csv-file" class="upload-zone-btn">
-        <span>📁</span>
-        Choose File
-      </label>
-      <input id="csv-file" type="file" accept=".csv" />
-    </div>
-
-    <div class="file-selected" id="file-selected">
-      <div class="file-icon">✅</div>
-      <div class="file-info">
-        <div class="file-name" id="file-name"></div>
-        <div class="file-size" id="file-size"></div>
+    <!-- Upload View -->
+    <div id="upload-view" class="view active">
+      <div class="upload-header">
+        <div class="upload-icon">📤</div>
+        <h1>Upload Products</h1>
+        <p class="subtitle">
+          Import products from CSV files with real-time progress tracking. Supports up to 500,000 records with automatic duplicate handling.
+        </p>
       </div>
-    </div>
 
-    <div class="info-cards">
-      <div class="info-card">
-        <div class="info-card-title">
-          <span>📋</span>
-          Required Columns
-        </div>
-        <div class="info-card-text">
-          CSV must contain: <code>sku</code>, <code>name</code>, and <code>description</code>
+      <div class="upload-zone" id="upload-zone">
+        <div class="upload-zone-icon">📄</div>
+        <div class="upload-zone-title">Drag & drop your CSV file here</div>
+        <div class="upload-zone-text">or click to browse your computer</div>
+        <label for="csv-file" class="upload-zone-btn">
+          <span>📁</span>
+          Choose File
+        </label>
+        <input id="csv-file" type="file" accept=".csv" />
+      </div>
+
+      <div class="file-selected" id="file-selected">
+        <div class="file-icon">✅</div>
+        <div class="file-info">
+          <div class="file-name" id="file-name"></div>
+          <div class="file-size" id="file-size"></div>
         </div>
       </div>
-      <div class="info-card">
-        <div class="info-card-title">
-          <span>🔄</span>
-          Duplicate Handling
+
+      <div class="info-cards">
+        <div class="info-card">
+          <div class="info-card-title">
+            <span>📋</span>
+            Required Columns
+          </div>
+          <div class="info-card-text">
+            CSV must contain: <code>sku</code>, <code>name</code>, and <code>description</code>
+          </div>
         </div>
-        <div class="info-card-text">
-          Products with matching SKUs (case-insensitive) will be automatically updated
+        <div class="info-card">
+          <div class="info-card-title">
+            <span>🔄</span>
+            Duplicate Handling
+          </div>
+          <div class="info-card-text">
+            Products with matching SKUs (case-insensitive) will be automatically updated
+          </div>
+        </div>
+        <div class="info-card">
+          <div class="info-card-title">
+            <span>⚡</span>
+            Background Processing
+          </div>
+          <div class="info-card-text">
+            Large imports run asynchronously without blocking your workflow
+          </div>
         </div>
       </div>
-      <div class="info-card">
-        <div class="info-card-title">
-          <span>⚡</span>
-          Background Processing
+
+      <button id="upload-btn" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 16px;" disabled>
+        <span>🚀</span>
+        Start Upload
+      </button>
+    </div>
+
+    <!-- Progress View -->
+    <div id="progress-view" class="view">
+      <div class="progress-header">
+        <div class="progress-title">
+          <div class="progress-phase-icon" id="phase-icon">📤</div>
+          <span id="phase-title">Upload Phase</span>
         </div>
-        <div class="info-card-text">
-          Large imports run asynchronously without blocking your workflow
+        <div class="progress-status-badge" id="status-badge">
+          <span class="status-dot"></span>
+          <span id="status-text">Initializing...</span>
         </div>
       </div>
-    </div>
 
-    <button id="upload-btn" class="btn btn-primary" style="width: 100%; padding: 14px; font-size: 16px;" disabled>
-      <span>🚀</span>
-      Start Upload
-    </button>
-  </div>
+      <div class="unified-progress">
+        <div class="progress-info">
+          <div class="progress-label" id="progress-label">Preparing upload...</div>
+          <div class="progress-percentage" id="progress-percent">0%</div>
+        </div>
+        <div class="progress-bar-wrapper">
+          <div class="progress-bar-fill" id="progress-bar"></div>
+        </div>
+        <div class="progress-details" id="progress-details">
+          <span>⏱️</span>
+          <span id="progress-detail-text">Waiting to start...</span>
+        </div>
+      </div>
 
-  <div class="progress-section" id="progress-section">
-    <div class="progress-header">
-      <div class="progress-title">
-        <div class="progress-phase-icon" id="phase-icon">📤</div>
-        <span id="phase-title">Upload Phase</span>
+      <div class="stats-grid" id="stats-grid" style="display: none;">
+        <div class="stat-item">
+          <div class="stat-value" id="stat-processed">0</div>
+          <div class="stat-label">Processed</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="stat-total">0</div>
+          <div class="stat-label">Total Rows</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="stat-created">0</div>
+          <div class="stat-label">Created</div>
+        </div>
+        <div class="stat-item">
+          <div class="stat-value" id="stat-updated">0</div>
+          <div class="stat-label">Updated</div>
+        </div>
       </div>
-      <div class="progress-status-badge" id="status-badge">
-        <span class="status-dot"></span>
-        <span id="status-text">Initializing...</span>
-      </div>
-    </div>
 
-    <div class="unified-progress">
-      <div class="progress-info">
-        <div class="progress-label" id="progress-label">Preparing upload...</div>
-        <div class="progress-percentage" id="progress-percent">0%</div>
+      <div class="activity-log">
+        <div class="log-header">
+          <span>📝</span>
+          Activity Log
+        </div>
+        <div class="log-entries" id="log-entries"></div>
       </div>
-      <div class="progress-bar-wrapper">
-        <div class="progress-bar-fill" id="progress-bar"></div>
-      </div>
-      <div class="progress-details" id="progress-details">
-        <span>⏱️</span>
-        <span id="progress-detail-text">Waiting to start...</span>
-      </div>
-    </div>
 
-    <div class="stats-grid" id="stats-grid" style="display: none;">
-      <div class="stat-item">
-        <div class="stat-value" id="stat-processed">0</div>
-        <div class="stat-label">Processed</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value" id="stat-total">0</div>
-        <div class="stat-label">Total Rows</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value" id="stat-created">0</div>
-        <div class="stat-label">Created</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value" id="stat-updated">0</div>
-        <div class="stat-label">Updated</div>
+      <div class="message-banner" id="message-banner">
+        <span class="message-icon" id="message-icon"></span>
+        <span id="message-text"></span>
       </div>
     </div>
 
-    <div class="activity-log">
-      <div class="log-header">
-        <span>📝</span>
-        Activity Log
-      </div>
-      <div class="log-entries" id="log-entries"></div>
-    </div>
+    <!-- Success View -->
+    <div id="success-view" class="view">
+      <div class="success-animation">
+        <div class="checkmark-circle">
+          <svg viewBox="0 0 52 52">
+            <polyline points="14 27 22 35 38 19"/>
+          </svg>
+        </div>
+        <h2 class="success-title">Import Successful!</h2>
+        <p class="success-subtitle">Your products have been imported successfully</p>
 
-    <div class="message-banner" id="message-banner">
-      <span class="message-icon" id="message-icon"></span>
-      <span id="message-text"></span>
+        <div class="success-stats">
+          <div class="success-stat">
+            <div class="success-stat-value" id="success-total">0</div>
+            <div class="success-stat-label">Total Imported</div>
+          </div>
+          <div class="success-stat">
+            <div class="success-stat-value" id="success-created">0</div>
+            <div class="success-stat-label">Created</div>
+          </div>
+          <div class="success-stat">
+            <div class="success-stat-value" id="success-updated">0</div>
+            <div class="success-stat-label">Updated</div>
+          </div>
+        </div>
+
+        <div class="button-group">
+          <button id="upload-another-btn" class="btn btn-primary" style="padding: 14px 32px; font-size: 16px;">
+            <span>📤</span>
+            Upload Another File
+          </button>
+          <a href="/products/" class="btn btn-secondary" style="padding: 14px 32px; font-size: 16px; text-decoration: none;">
+            <span>📋</span>
+            View Products
+          </a>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <script>
   const uploadBtn = document.getElementById("upload-btn");
+  const uploadAnotherBtn = document.getElementById("upload-another-btn");
   const fileInput = document.getElementById("csv-file");
   const uploadZone = document.getElementById("upload-zone");
   const fileSelected = document.getElementById("file-selected");
   const fileName = document.getElementById("file-name");
   const fileSize = document.getElementById("file-size");
-  const progressSection = document.getElementById("progress-section");
+
+  const uploadView = document.getElementById("upload-view");
+  const progressView = document.getElementById("progress-view");
+  const successView = document.getElementById("success-view");
 
   const phaseIcon = document.getElementById("phase-icon");
   const phaseTitle = document.getElementById("phase-title");
@@ -692,7 +820,18 @@
   let currentJobId = null;
   let statusInterval = null;
   let selectedFile = null;
-  let currentPhase = 'idle'; // idle, uploading, parsing, importing, complete
+  let currentPhase = 'idle';
+
+  // View switching
+  function showView(viewName) {
+    uploadView.classList.remove('active');
+    progressView.classList.remove('active');
+    successView.classList.remove('active');
+
+    if (viewName === 'upload') uploadView.classList.add('active');
+    else if (viewName === 'progress') progressView.classList.add('active');
+    else if (viewName === 'success') successView.classList.add('active');
+  }
 
   // File selection handlers
   fileInput.addEventListener("change", handleFileSelect);
@@ -752,8 +891,6 @@
     phaseIcon.textContent = icon;
     phaseTitle.textContent = title;
     phaseIcon.classList.add('active');
-    
-    // Update progress bar class
     progressBar.className = 'progress-bar-fill ' + phase;
   }
 
@@ -783,10 +920,9 @@
       return;
     }
 
-    resetUI();
+    resetProgressUI();
+    showView('progress');
     uploadBtn.disabled = true;
-    progressSection.classList.add("show");
-    progressSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 
     try {
       addLog("Starting upload process...", "info");
@@ -833,13 +969,12 @@
 
       addLog("Import job queued successfully", "success");
 
-      // Phase 2: Parsing (indeterminate)
+      // Phase 2: Parsing
       updatePhase('parsing', '🔍', 'Parsing Phase');
       updateStatus("Parsing CSV...");
       updateProgress(0, "Parsing CSV file...", "Analyzing file structure and validating data...");
-      progressPercent.style.opacity = '0'; // Hide percentage during parsing
+      progressPercent.style.opacity = '0';
 
-      // Start polling
       pollStatus(currentJobId);
 
     } catch (err) {
@@ -896,13 +1031,12 @@
 
         const data = await resp.json();
 
-        // Check if we've moved from parsing to importing
         if ((data.status === 'importing' || data.total_rows > 0) && !hasStartedImporting) {
           hasStartedImporting = true;
           
-          // Phase 3: Importing (determinate)
+          // Phase 3: Importing
           updatePhase('importing', '⚙️', 'Import Phase');
-          progressPercent.style.opacity = '1'; // Show percentage again
+          progressPercent.style.opacity = '1';
           statsGrid.style.display = 'grid';
           addLog(`Starting import of ${data.total_rows} rows...`, "info");
         }
@@ -928,8 +1062,23 @@
           updatePhase('complete', '✅', 'Complete');
           updateStatus("Import completed!", "success");
           updateProgress(100, "Import complete!", `Successfully imported ${data.processed_rows || 0} products`);
-          showMessage(`Successfully imported ${data.processed_rows || 0} products!`, "success", "🎉");
           addLog(`Import completed successfully! Total: ${data.processed_rows || 0} rows`, "success");
+          
+          // Show success view
+          setTimeout(() => {
+            document.getElementById("success-total").textContent = data.processed_rows || 0;
+            document.getElementById("success-created").textContent = data.created || 0;
+            document.getElementById("success-updated").textContent = data.updated || 0;
+            showView('success');
+          }, 1500);
+
+        } else if (data.status === "failed") {
+          clearInterval(statusInterval);
+          phaseIcon.textContent = "❌";
+          phaseIcon.classList.remove('active');
+          updateStatus("Import failed", "error");
+          showMessage(data.error_message || "Import failed", "error", "❌");
+          addLog(`Import failed: ${data.error_message}`, "error");
           uploadBtn.disabled = false;
         }
       } catch (err) {
@@ -938,7 +1087,13 @@
     }, 1500);
   }
 
-  function resetUI() {
+  // Upload another file
+  uploadAnotherBtn.addEventListener("click", () => {
+    resetAll();
+    showView('upload');
+  });
+
+  function resetProgressUI() {
     progressPercent.textContent = "0%";
     progressPercent.style.opacity = "1";
     progressBar.style.width = "0%";
@@ -956,18 +1111,19 @@
     document.getElementById("stat-updated").textContent = "0";
   }
 
+  function resetAll() {
+    if (statusInterval) clearInterval(statusInterval);
+    selectedFile = null;
+    fileInput.value = '';
+    fileSelected.classList.remove("show");
+    uploadBtn.disabled = true;
+    resetProgressUI();
+  }
+
   function getCookie(name) {
     const value = `; ${document.cookie}`;
     const parts = value.split(`; ${name}=`);
     if (parts.length === 2) return parts.pop().split(";").shift();
   }
 </script>
-{% endblock %}disabled = false;
-        } else if (data.status === "failed") {
-          clearInterval(statusInterval);
-          phaseIcon.textContent = "❌";
-          phaseIcon.classList.remove('active');
-          updateStatus("Import failed", "error");
-          showMessage(data.error_message || "Import failed", "error", "❌");
-          addLog(`Import failed: ${data.error_message}`, "error");
-          uploadBtn.
+{% endblock %}

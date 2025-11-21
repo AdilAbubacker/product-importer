@@ -1,23 +1,23 @@
 # 🚀 Scalable Product Ingestion Engine
 
-[![Live Demo](https://img.shields.io/badge/LIVE%20DEMO-Click%20Here-brightgreen?style=for-the-badge)](https://web-production-60e3e.up.railway.app/)
-
+[![Live Demo](https://img.shields.io/badge/LIVE%20DEMO-Click%20Here-brightgreen?style=for-the-badge)](https://web-production-60e3e.up.railway.app/)  
 A production-grade **Django + Celery + PostgreSQL** application designed to handle large-scale data ingestion. This system supports importing **500,000+ products** via CSV without HTTP timeouts, utilizing **Presigned URLs** for direct object storage uploads and **Celery** for asynchronous processing.
 
+    
 
 -----
 
 ## 📖 Table of Contents
 
-  - [Key Features](https://www.google.com/search?q=%23-key-features)
-  - [Architecture & Design](https://www.google.com/search?q=%23-architecture--design)
-      - [The 500k Row Challenge](https://www.google.com/search?q=%23the-500k-row-challenge)
-      - [End-to-End Import Flow](https://www.google.com/search?q=%23end-to-end-import-flow)
-  - [Tech Stack](https://www.google.com/search?q=%23-tech-stack)
-  - [Data Model](https://www.google.com/search?q=%23-data-model)
-  - [Installation & Setup](https://www.google.com/search?q=%23-installation--setup)
-  - [Usage Guide](https://www.google.com/search?q=%23-usage-guide)
-  - [API Overview](https://www.google.com/search?q=%23-api-overview)
+- [Key Features](#-key-features)
+- [Architecture & Design](#-architecture--design)  
+    - [The 500k Row Challenge](#the-500k-row-challenge)  
+    - [End-to-End Import Flow](#end-to-end-import-flow)  
+- [Tech Stack](#-tech-stack)
+- [Data Model](#-data-model)
+- [Installation & Setup](#-installation--setup)
+- [Usage Guide](#-usage-guide)
+- [API Overview](#-api-overview)
 
 -----
 
@@ -75,23 +75,10 @@ We decouple the **Data Transfer** (Browser to Storage) from the **Data Processin
   * **Message Broker:** Redis
   * **Database:** PostgreSQL (with unique indices for SKU enforcement)
   * **Object Storage:** Cloudflare R2 (S3-Compatible) using `boto3`
-  * **Frontend:** DTL, HTML5, Vanilla JavaScript, CSS
-
-
------
-
-## 🔌 API Overview
-
-| Method | Endpoint | Description |
-| :--- | :--- | :--- |
-| `POST` | `/api/imports/create-upload/` | Returns a presigned PUT URL for S3/R2. |
-| `POST` | `/api/imports/start/` | Triggers the Celery import task. |
-| `GET` | `/api/imports/{id}/status/` | Returns job status and progress percentage. |
-| `GET` | `/api/products/` | List products (supports filtering). |
-| `DELETE`| `/api/products/bulk_delete/` | Deletes all products. |
-| `POST` | `/api/webhooks/` | Register a new webhook. |
+  * **Frontend:** HTML5, Vanilla JavaScript, Bootstrap (for clean UI)
 
 -----
+
 
 ## 🚀 Installation & Setup
 
@@ -105,7 +92,7 @@ We decouple the **Data Transfer** (Browser to Storage) from the **Data Processin
 ### 1\. Clone and Configure
 
 ```bash
-git clone https://github.com/AdilAbubacker/product-importer.git
+git clone https://github.com/yourusername/product-importer.git
 cd product-importer
 
 python -m venv venv
@@ -176,4 +163,17 @@ Visit `http://127.0.0.1:8000` to start using the app.
 2.  Add a target URL (e.g., a `webhook.site` URL for testing).
 3.  Click **Test** to fire a sample payload.
 4.  View the **Last Status** and **Latency** columns to verify connectivity.
+
+-----
+
+## 🔌 API Overview
+
+| Method | Endpoint | Description |
+| :--- | :--- | :--- |
+| `POST` | `/api/imports/presign/` | Returns a presigned PUT URL for S3/R2. |
+| `POST` | `/api/imports/start/` | Triggers the Celery import task. |
+| `GET` | `/api/imports/{id}/status/` | Returns job status and progress percentage. |
+| `GET` | `/api/products/` | List products (supports filtering). |
+| `DELETE`| `/api/products/bulk_delete/` | Deletes all products. |
+| `POST` | `/api/webhooks/` | Register a new webhook. |
 

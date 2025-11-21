@@ -4,6 +4,7 @@
 from django.http import JsonResponse, Http404
 from django.shortcuts import render
 from django.views.decorators.http import require_POST, require_GET
+from django.views.decorators.csrf import csrf_exempt
 
 from imports.models import ImportJob
 from imports.tasks import process_import_job
@@ -20,6 +21,7 @@ def upload_products_page(request):
 
 
 @require_POST
+@csrf_exempt  # for dev; later use proper CSRF handling
 def create_upload_job(request):
     job = ImportJob.objects.create(
         status=ImportJob.STATUS_PENDING,
@@ -45,6 +47,7 @@ def create_upload_job(request):
 
 
 @require_POST
+@csrf_exempt
 def start_import_job(request, job_id: int):
     try:
         job = ImportJob.objects.get(pk=job_id)

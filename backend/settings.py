@@ -293,31 +293,3 @@ LOGGING = {
         },
     },
 }
-
-# ---------------------------------------------------------
-# CSRF SETTINGS (for production)
-# ---------------------------------------------------------
-
-# CSRF cookie settings - important for production
-# Set CSRF_COOKIE_SECURE=True in production (HTTPS only)
-CSRF_COOKIE_SECURE = os.environ.get("CSRF_COOKIE_SECURE", "False") == "True"
-# Allow JavaScript to read CSRF token for AJAX requests
-CSRF_COOKIE_HTTPONLY = False
-# Use cookie-based CSRF (default)
-CSRF_USE_SESSIONS = False
-# SameSite setting - Lax allows same-site requests
-CSRF_COOKIE_SAMESITE = 'Lax'
-# Trusted origins for CSRF (add your production domain)
-# Format: "https://yourdomain.com,https://www.yourdomain.com"
-CSRF_TRUSTED_ORIGINS = os.environ.get("CSRF_TRUSTED_ORIGINS", "").split(",") if os.environ.get("CSRF_TRUSTED_ORIGINS") else []
-
-# Session cookie settings (should match CSRF settings)
-SESSION_COOKIE_SECURE = CSRF_COOKIE_SECURE
-SESSION_COOKIE_SAMESITE = CSRF_COOKIE_SAMESITE
-
-
-CSRF_TRUSTED_ORIGINS = [
-    "https://web-production-60e3e.up.railway.app",
-    "http://localhost",
-    "http://127.0.0.1:8000",
-]

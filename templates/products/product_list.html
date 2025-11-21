@@ -849,42 +849,6 @@
       }
     }
   });
-
-  // Ensure CSRF token is included in form submission
-  productForm.addEventListener("submit", function(e) {
-    // Get CSRF token from cookie if not in form
-    const existingToken = productForm.querySelector('input[name="csrfmiddlewaretoken"]');
-    if (!existingToken || !existingToken.value) {
-      const csrftoken = getCookie('csrftoken');
-      if (csrftoken) {
-        if (!existingToken) {
-          const tokenInput = document.createElement('input');
-          tokenInput.type = 'hidden';
-          tokenInput.name = 'csrfmiddlewaretoken';
-          tokenInput.value = csrftoken;
-          productForm.appendChild(tokenInput);
-        } else {
-          existingToken.value = csrftoken;
-        }
-      }
-    }
-  });
-
-  // Helper function to get CSRF token from cookie
-  function getCookie(name) {
-    let cookieValue = null;
-    if (document.cookie && document.cookie !== '') {
-      const cookies = document.cookie.split(';');
-      for (let i = 0; i < cookies.length; i++) {
-        const cookie = cookies[i].trim();
-        if (cookie.substring(0, name.length + 1) === (name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
-          break;
-        }
-      }
-    }
-    return cookieValue;
-  }
 </script>
 
 <!-- Delete Confirmation Modal -->
