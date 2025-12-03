@@ -103,7 +103,7 @@ To prevent "split-brain" where a zombie worker wakes up and overwrites a new ret
 | **Zombie Hang** | Heartbeat stops → Stale Monitor kills job | ❌ Clean Failure (No Infinite Load) |
 | **Race Condition** | Old task wakes up → `attempt_id` mismatch | 🛡️ Update Blocked (Data Safe) |
 
-Compared to a “simple Celery task” import, this design:
+This design:
 
 - Handles both exception-based failures (retries) and silent failures (stale detection).
 - Prevents state corruption during retries and redelivery via `attempt_id` gating.
