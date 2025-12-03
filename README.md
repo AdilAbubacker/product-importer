@@ -102,6 +102,7 @@ To prevent "split-brain" where a zombie worker wakes up and overwrites a new ret
 | **Worker Crash** | `acks_late=True` → Message Re-queued | ✅ Auto-Recovery (New Worker) |
 | **Zombie Hang** | Heartbeat stops → Stale Monitor kills job | ❌ Clean Failure (No Infinite Load) |
 | **Race Condition** | Old task wakes up → `attempt_id` mismatch | 🛡️ Update Blocked (Data Safe) |
+
 Compared to a “simple Celery task” import, this design:
 
 - Handles both exception-based failures (retries) and silent failures (stale detection).
