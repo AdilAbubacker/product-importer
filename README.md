@@ -66,6 +66,78 @@ We decouple the **Data Transfer** (Browser to Storage) from the **Data Processin
       * Batches records (e.g., 1,000 at a time) and performs `ON CONFLICT` bulk upserts into Postgres.
 5.  **Feedback:** Frontend polls the status endpoint to show a progress bar (e.g., "Importing: 45%").
 
+---
+
+## 🔁 Reliability & Failure Handling
+
+Long-running imports are built to be resilient to both transient infrastructure issues and silent failures. The core ideas:
+
+### 1. Retry with Exponential Backoff (Transient Failures)
+
+The Celery import task only retries for transient, likely-to-recover errors (e.g. R2/network issues):
+
+- `max_retries = 5`
+- Exponential backoff (1s → 2s → 4s → …) with jitter
+- Backoff capped to 5 minutes
+
+This allows short storage/network glitches to resolve without failing a 500k-row import, while avoiding retry storms against R2 or the database.
+
+Permanent errors (e.g. CSV format issues, validation failures, logic bugs) fail fast and are **not** retried, so problems remain visible instead of being hidden behind retries.
+
+### 2. Heartbeat + Stale Job Reconciliation (Silent Failures)
+
+Celery retries only trigger on exceptions, but some failures produce no exception (e.g. worker hang, deadlock, worker down without restart).
+
+To handle these:
+
+- The worker updates `ImportJob.updated_at` regularly as it processes batches (heartbeat).
+- A stale checker (or the status endpoint) marks a job as failed if:
+  - `status ∈ { queued, parsing, importing }`
+  - `updated_at` is older than a configurable `STALE_MINUTES` cutoff.
+
+This prevents “importing forever” states in the UI. Every job eventually reaches a terminal state (`completed`, `partial_success`, or `failed`), and users can safely retry.
+
+### 3. attempt_id Run Token (Prevents Zombie Tasks / Split-Brain)
+
+Each import run is identified by an `attempt_id` stored on the `ImportJob`. The Celery task receives both `job_id` and `attempt_id`, and every state update is guarded:
+
+- Updates are only applied if `(id, attempt_id)` matches the current row in the database and the job is in a running state.
+- If the guard fails, the task exits immediately.
+
+This prevents stale or duplicated tasks from mutating job state after:
+
+- A stale checker has marked the job as failed.
+- The user has started a new attempt (retry).
+- The broker has redelivered a task after worker loss.
+
+Product writes themselves are idempotent upserts on a normalized SKU key, so even if an old task continues briefly, it can only re-apply the same data. Combined with `attempt_id` gating, this avoids split-brain behaviour in both metadata and data paths.
+
+### 4. Crash Recovery: Late ACK + Requeue on Worker Loss
+
+The import task is configured with:
+
+- `acks_late = True` → the broker only marks the message as acknowledged after the task completes.
+- `task_reject_on_worker_lost = True` → if a worker dies mid-task, the message is treated as unprocessed and requeued.
+
+If a worker crashes mid-import, Celery can safely redeliver the task to another worker. Because the import logic is chunked and idempotent (upserts keyed by `sku_norm`), re-processing the file after a crash is safe: previously imported rows are simply updated to the same values again.
+
+### 5. Failure Scenario Matrix
+
+| Failure Scenario                       | What Happens                                                             | Result                                 |
+|---------------------------------------|---------------------------------------------------------------------------|----------------------------------------|
+| R2 / network glitch                   | Task raises `RequestException` → retried with exponential backoff        | Often succeeds automatically           |
+| Bad CSV / logic bug                   | Treated as permanent error → no retry                                    | Fast, clear failure                    |
+| Worker crashes mid-task               | Message not ACKed, `task_reject_on_worker_lost=True` → message requeued  | Automatic recovery via re-execution    |
+| Worker hangs (no exception)           | Heartbeat stops → stale checker marks job as failed                      | No infinite spinner in the UI          |
+| User retries while old task exists    | New `attempt_id` invalidates stale updates from old task                 | No split-brain / zombie state updates  |
+
+Compared to a “simple Celery task” import, this design:
+
+- Handles both exception-based failures (retries) and silent failures (stale detection).
+- Prevents state corruption during retries and redelivery via `attempt_id` gating.
+- Supports at-least-once execution semantics safely via idempotent upserts.
+- Guarantees user-facing clarity: imports always converge to a terminal state, with progress and failure reasons exposed for debugging.
+
 -----
 
 ## 💻 Tech Stack
