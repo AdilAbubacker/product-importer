@@ -66,6 +66,37 @@ We decouple the **Data Transfer** (Browser to Storage) from the **Data Processin
       * Batches records (e.g., 1,000 at a time) and performs `ON CONFLICT` bulk upserts into Postgres.
 5.  **Feedback:** Frontend polls the status endpoint to show a progress bar (e.g., "Importing: 45%").
 
+```mermaid
+sequenceDiagram
+    participant Browser
+    participant Django
+    participant R2
+    participant Celery
+    participant PostgreSQL
+
+    Browser->>Django: Request presigned URL
+    Django->>R2: Generate presigned PUT URL
+    R2-->>Django: URL (expires in 1hr)
+    Django-->>Browser: Return presigned URL
+    
+    Browser->>R2: Upload CSV directly (bypass Django)
+    R2-->>Browser: Upload complete
+    
+    Browser->>Django: POST /imports/start/ {file_key}
+    Django->>PostgreSQL: Create ImportJob
+    Django->>Celery: Enqueue task
+    Django-->>Browser: Job ID
+    
+    Celery->>R2: Stream CSV
+    loop Every 1000 rows
+        Celery->>PostgreSQL: Bulk upsert
+        Celery->>PostgreSQL: Update heartbeat
+    end
+    
+    Browser->>Django: Poll /imports/{id}/status/
+    Django->>PostgreSQL: Query job status
+    Django-->>Browser: Progress: 45%
+```    
 ---
 
 ## 🔁 Reliability & Failure Handling
